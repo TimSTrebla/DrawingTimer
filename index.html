@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16171a">
+<meta name="description" content="Timed figure-drawing practice with public-domain references from Wikimedia Commons and the Art Institute of Chicago.">
+<title>Schetsklok · sketch clock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap">
+<style>
+/* One screen: settings, then a full-bleed stage with a thin control rail.
+   Deliberately one dark "dim studio" look, so the reference image reads true. */
+:root{
+  --graphite:#16171a; --slate:#202226; --line:#33363c; --paper:#e9e6df; --muted:#9a978f;
+  --sanguine:#d27650; --sanguine-dim:#5a3326; --ok:#7fae8c;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--graphite);color:var(--paper);font-family:var(--f-display);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button,select,input{font:inherit;color:inherit}
+a{color:var(--sanguine)}
+:focus-visible{outline:2px solid var(--sanguine);outline-offset:2px}
+.wrap{max-width:980px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+header h1{font-size:2.1rem;font-weight:700;letter-spacing:-.01em;margin:0}
+header p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+section{display:grid;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--slate);border:1px solid var(--line);border-radius:4px;padding:9px 14px;cursor:pointer;min-height:40px;display:inline-flex;align-items:center}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--sanguine);border-color:var(--sanguine);color:var(--graphite);font-weight:600}
+.btn.primary:disabled{background:var(--sanguine-dim);border-color:var(--sanguine-dim);color:var(--muted);cursor:not-allowed}
+.btn.small{min-height:32px;padding:4px 10px;font-size:.85rem}
+select{background:var(--slate);border:1px solid var(--line);border-radius:4px;padding:8px 10px;min-height:40px}
+.note{color:var(--muted);font-size:.9rem;margin:0}
+.note b{color:var(--paper);font-weight:500}
+.status{font-family:var(--f-mono);font-size:.82rem;color:var(--muted)}
+.status.err{color:var(--sanguine)}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.cat{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:4px;cursor:pointer}
+.cat input{margin-top:3px;accent-color:var(--sanguine);width:18px;height:18px}
+.cat .n{font-weight:600}
+.cat .m{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.dots{letter-spacing:2px;color:var(--sanguine)}
+.plans{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.plan{text-align:left;display:grid;gap:4px;padding:12px;border:1px solid var(--line);border-radius:4px;background:transparent;cursor:pointer}
+.plan[aria-pressed=true]{border-color:var(--sanguine);background:color-mix(in srgb,var(--sanguine) 10%,transparent)}
+.plan .t{font-weight:600}
+.plan .s{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.ladder{display:flex;gap:3px;align-items:flex-end;height:22px}
+.ladder i{display:block;width:6px;background:var(--sanguine);opacity:.75;border-radius:1px}
+.free{display:none;gap:8px}
+.free.on{display:flex;flex-wrap:wrap}
+.opts label{display:flex;gap:6px;align-items:center;cursor:pointer;min-height:36px}
+.opts input{accent-color:var(--sanguine);width:18px;height:18px}
+.summary{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px}
+.summary .big{font-family:var(--f-mono);font-size:1.1rem}
+details{border:1px solid var(--line);border-radius:4px;padding:10px 14px}
+details summary{cursor:pointer;font-weight:600;min-height:28px}
+details code{font-family:var(--f-mono);font-size:.82rem;color:var(--paper)}
+.tree{font-family:var(--f-mono);font-size:.8rem;color:var(--paper);background:var(--slate);padding:10px;border-radius:4px;overflow-x:auto;white-space:pre;margin:8px 0}
+/* Review */
+.sets{display:grid;gap:6px;margin:10px 0}
+.set{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0}
+.set .q{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);word-break:break-word}
+.rev{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.rev figure{margin:0;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--slate);position:relative}
+.rev button{display:block;width:100%;padding:0;border:0;background:#000;cursor:pointer;aspect-ratio:1}
+.rev img{width:100%;height:100%;object-fit:contain;display:block}
+.rev figcaption{padding:6px 8px;font-size:.78rem;line-height:1.3}
+.rev figcaption span{color:var(--muted);display:block}
+.rev figure.nee{border-color:var(--sanguine)}
+.rev figure.nee img{opacity:.25}
+.rev figure.broken::after{content:"won't load";position:absolute;top:8px;left:8px;background:var(--line);color:var(--paper);font:600 .72rem var(--f-mono);padding:2px 6px;border-radius:2px}
+.rev figure.nee::after{content:"rejected";position:absolute;top:8px;left:8px;background:var(--sanguine);color:var(--graphite);font:600 .72rem var(--f-mono);padding:2px 6px;border-radius:2px}
+textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);border:1px solid var(--line);border-radius:4px;font:.8rem var(--f-mono);padding:8px}
+
+/* Stage */
+#stage{position:fixed;inset:0;background:var(--graphite);display:grid;grid-template-rows:1fr auto;z-index:20}
+.view{position:relative;overflow:hidden;display:grid;place-items:center;min-height:0;padding:calc(10px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px))}
+.view img{max-width:100%;max-height:100%;object-fit:contain;transition:filter .2s}
+.view img.gray{filter:grayscale(1) contrast(1.05)}
+.view img.flip{transform:scaleX(-1)}
+.grid{position:absolute;pointer-events:none;background-image:linear-gradient(var(--paper) 1px,transparent 1px),linear-gradient(90deg,var(--paper) 1px,transparent 1px);opacity:.22}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--f-mono);background:var(--graphite)}
+.break{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:var(--graphite);padding:16px}
+.break h2{font-size:2.4rem;margin:0}
+.break .note{margin:8px 0 18px}
+.rail{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);background:var(--slate);padding-block:8px calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+.clock{font-family:var(--f-mono);font-size:1.8rem;font-weight:600;font-variant-numeric:tabular-nums;min-width:5ch}
+.clock.warn{color:var(--sanguine)}
+.meta{display:grid;min-width:0;flex:1 1 220px}
+.meta .a{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .b{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.ctrls{display:flex;gap:6px;flex-wrap:wrap}
+.ib{min-width:44px;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:4px;background:var(--graphite);cursor:pointer;font-family:var(--f-mono);font-size:.9rem}
+.ib[aria-pressed=true]{border-color:var(--sanguine);color:var(--sanguine)}
+.bar{position:absolute;left:0;bottom:0;height:3px;background:var(--sanguine);transition:width .25s linear}
+.done{max-width:560px;display:grid;gap:14px;justify-items:center}
+.thumbs{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.thumbs img{width:56px;height:56px;object-fit:cover;border-radius:2px;opacity:.85}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="setup">
+  <header>
+    <div class="lbl">Timed drawing practice</div>
+    <h1>Schetsklok</h1>
+    <p>Public-domain references from Wikimedia Commons and the Art Institute of Chicago, plus your own folder. In a class session the poses grow from gesture to study, and the images grow with them from simple to complex.</p>
+  </header>
+
+  <section>
+    <div class="lbl">1 · Categories</div>
+    <div class="cats" id="cats"></div>
+    <div class="row">
+      <label class="btn" for="dirInput">Add your own folder…</label>
+      <input type="file" id="dirInput" webkitdirectory multiple hidden>
+      <label class="btn" for="fileInput">Single images…</label>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      <span class="status" id="status"></span>
+    </div>
+  </section>
+
+  <section>
+    <div class="lbl">2 · Session</div>
+    <div class="plans" id="plans"></div>
+    <div class="free" id="free">
+      <select id="freeDur" aria-label="Time per pose">
+        <option value="30">30 seconds</option><option value="45">45 seconds</option><option value="60" selected>1 minute</option>
+        <option value="120">2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="1200">20 minutes</option>
+      </select>
+      <select id="freeCount" aria-label="Number of poses">
+        <option>5</option><option selected>10</option><option>20</option><option>40</option>
+      </select>
+    </div>
+    <div class="row opts">
+      <label for="level" class="lbl" style="margin-right:4px">Level</label>
+      <select id="level">
+        <option value="1">1 · gentle build-up</option>
+        <option value="2" selected>2 · mixed, rising</option>
+        <option value="3">3 · challenging</option>
+      </select>
+      <label><input type="checkbox" id="optGray"> greyscale</label>
+      <label><input type="checkbox" id="optBreak" checked> break between blocks</label>
+      <label><input type="checkbox" id="optSound" checked> tick on change</label>
+    </div>
+  </section>
+
+  <div class="summary">
+    <div><div class="lbl">Total</div><div class="big" id="sum">—</div></div>
+    <button class="btn primary" id="startBtn" disabled>Start session</button>
+  </div>
+
+  <details id="keur">
+    <summary>Review sources · 20 per set</summary>
+    <p class="note">See a sample of 20 from each search set. Tap an image to reject it: it then stays out of sessions on this device. <b>Copy verdict</b> puts your findings on the clipboard, so the search set itself can be improved.</p>
+    <div class="sets" id="sets"></div>
+    <div class="row"><button class="btn small" id="copyVerdict">Copy verdict</button><button class="btn small" id="refetch">Fetch sources again</button><span class="status" id="keurStatus"></span></div>
+    <textarea id="verdictOut" hidden readonly></textarea>
+    <div class="rev" id="rev"></div>
+  </details>
+
+  <details>
+    <summary>Your own folder: how to organise it</summary>
+    <p class="note">Subfolders become categories; a folder named after an existing category (Engraving, Drawing…) joins it. Put <b>n1</b>, <b>n2</b> or <b>n3</b> in a folder or file name to set the difficulty; without a label an image gets its category's default level. The images stay on your device.</p>
+    <div class="tree">Schetsklok/
+  AI/                 ← your own generations
+    n1 simple/
+    n3 busy scenes/
+  Engraving/          ← adds to the online engravings
+  Sculpture/</div>
+  </details>
+</div>
+
+<div id="stage" hidden>
+  <div class="view" id="view">
+    <img id="img" alt="">
+    <div class="grid" id="grid" hidden></div>
+    <div class="loading" id="loading" hidden>loading image…</div>
+    <div class="break" id="brk" hidden><div><div class="lbl">Next block</div><h2 id="brkT"></h2><p class="note" id="brkS"></p><button class="btn primary" id="brkGo">Continue</button></div></div>
+    <div class="break" id="fin" hidden><div class="done"><div class="lbl">Done</div><h2 id="finT"></h2><div class="thumbs" id="thumbs"></div><div class="row"><button class="btn primary" id="again">Another session</button><button class="btn" id="back">Back</button></div></div></div>
+    <div class="bar" id="bar"></div>
+  </div>
+  <div class="rail">
+    <div class="clock" id="clock">0:00</div>
+    <div class="meta"><span class="a" id="mA"></span><span class="b" id="mB"></span></div>
+    <div class="ctrls">
+      <button class="ib" id="bPrev" title="Previous (←)">◀</button>
+      <button class="ib" id="bPause" title="Pause (space)">❚❚</button>
+      <button class="ib" id="bNext" title="Next (→)">▶</button>
+      <button class="ib" id="bGray" aria-pressed="false" title="Greyscale (G)">G</button>
+      <button class="ib" id="bFlip" aria-pressed="false" title="Mirror (F)">⇋</button>
+      <button class="ib" id="bGrid" aria-pressed="false" title="Grid (R)">#</button>
+      <button class="ib" id="bFull" title="Full screen">⛶</button>
+      <button class="ib" id="bStop" title="Stop (Esc)">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+/* ===================================================================================
+   CONFIG — edit the sources here. One line per fixed search set.
+   source "commons": query = a category on Wikimedia Commons (subcategories are included).
+   source "aic":     query = a search term at the Art Institute of Chicago (public domain only),
+                     then filtered with the category's aicFilter.
+   level: 1 simple · 2 medium · 3 complex. Short poses get low levels.
+   keywords: recognise subfolders of your own folder (English and Dutch).
+   =================================================================================== */
+const CONFIG = {
+  categories: {
+    drawing:    {name:"Drawing",      level:1, keywords:["drawing","tekening","sketch","schets","chalk","krijt","sanguine","pencil","potlood","charcoal","houtskool"]},
+    sculpture:  {name:"Sculpture",    level:1, keywords:["sculpt","beeld","marble","marmer","bronze","brons","statue"]},
+    oil:        {name:"Oil painting", level:2, keywords:["oil","olie","painting","schilder","paint"]},
+    watercolour:{name:"Watercolour",  level:2, keywords:["watercol","aquarel","gouache"]},
+    ai:         {name:"AI images",    level:2, keywords:["ai","midjourney","flux","generat","sd"]},
+    engraving:  {name:"Engraving",    level:3, keywords:["engrav","gravure","graveer","etch","ets","doré","dore","woodcut","houtsnede","litho"]},
+  },
+  sets: [
+    {cat:"engraving", name:"Doré · Divine Comedy",  source:"commons", query:"Category:Gustave Dore's illustrations to the Divine Comedy", level:3},
+    {cat:"engraving", name:"Doré · Bible",          source:"commons", query:"Category:Doré's English Bible", level:3},
+    {cat:"engraving", name:"Doré · Don Quixote",    source:"commons", query:"Category:Don Quijote illustrated by Gustave Doré", level:3},
+    {cat:"engraving", name:"Dürer · engravings",    source:"commons", query:"Category:Engravings by Albrecht Dürer", level:3},
+    {cat:"engraving", name:"Rembrandt · etchings",  source:"commons", query:"Category:Etchings by Rembrandt", level:3},
+    {cat:"drawing",   name:"Chalk figure studies",  source:"aic",     query:"chalk figure study", level:1},
+    {cat:"drawing",   name:"Red chalk (sanguine)",  source:"aic",     query:"red chalk study", level:1},
+    // Next step, once the sets above are reviewed: oil painting (figurative) and sculpture via AIC and The Met.
+  ],
+  // AIC filters per category (regular expressions, case-insensitive).
+  // type: on artwork_type_title + classification_title · medium: on medium_display · exclude: on the title.
+  aicFilter: {
+    drawing: {type:"drawing", medium:"chalk|charcoal|crayon|sanguine",
+              exclude:"landscape|view of|\\bview\\b|tree|river|harbou?r|city|street|church|architect|ornament|design for|\\bmap\\b|ship|boat|still life"},
+  },
+  maxPerSet: 160,   // more is not needed and keeps loading fast
+  commonsCalls: 16, // max API calls per Commons set; each subcategory costs one
+  aicPages: 2,      // × 100 search results
+  width: 1280,      // image width on Commons (one of Wikimedia's standard sizes)
+  cacheHours: 72,   // keep search results on this device
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl = u => /^https:\/\//i.test(u || "") ? u : "";
+const shuffle = a => { for (let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const pickRandom = a => a[Math.random()*a.length|0];
+const clip = (s, n) => (s = String(s || "").replace(/\s+/g, " ").trim()).length > n ? s.slice(0, n-1) + "…" : s;
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+/* ---------- Categories ---------- */
+const CATS = new Map(Object.entries(CONFIG.categories).map(([key, c]) => [key, {key, name:c.name, d:c.level, kw:c.keywords}]));
+function catForFolder(folder){
+  const f = (folder || "").toLowerCase();
+  for (const c of CATS.values()) if ((c.kw || []).some(k => k.length <= 2 ? new RegExp(`(^|[^a-z])${k}([^a-z]|$)`).test(f) : f.includes(k))) return c;
+  const key = "folder:" + f;
+  if (!CATS.has(key)) CATS.set(key, {key, name: folder || "Other", d:2, kw:[]});
+  return CATS.get(key);
+}
+const levelOf = s => { const m = /(?:^|[^a-z])n([123])(?:[^0-9]|$)/i.exec(s); if (m) return +m[1];
+  if (/easy|simple|makkelijk|eenvoudig/i.test(s)) return 1; if (/medium|gemiddeld/i.test(s)) return 2; if (/hard|complex|moeilijk/i.test(s)) return 3; return 0; };
+
+/* ---------- Network: small queue, timeout, one retry ---------- */
+const queue = (n => { let active = 0; const q = [];
+  const pump = () => { while (active < n && q.length){ const [fn, res, rej] = q.shift(); active++; fn().then(res, rej).finally(() => { active--; pump(); }); } };
+  return fn => new Promise((res, rej) => { q.push([fn, res, rej]); pump(); });
+})(4);
+async function getJSON(url, tries = 2){
+  for (let k = 0; ; k++){
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), 15000);
+    try { const r = await fetch(url, {signal: ac.signal}); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
+    catch (e){ if (k + 1 >= tries) throw e; await new Promise(r => setTimeout(r, 900 * (k + 1))); }
+    finally { clearTimeout(t); }
+  }
+}
+const htmlText = html => html ? (new DOMParser().parseFromString(String(html), "text/html").body.textContent || "") : "";
+
+/* ---------- Source: Wikimedia Commons (category + subcategories, breadth-first) ---------- */
+const COMMONS = "https://commons.wikimedia.org/w/api.php";
+const PD = /public domain|^pd\b|^pd-|cc0|cc-zero|no restrictions|mark 1\.0/i;
+function commonsItem(pg){
+  const ii = pg.imageinfo && pg.imageinfo[0]; if (!ii) return null;
+  if (!/^image\/(jpeg|png|tiff|webp)$/.test(ii.mime || "")) return null;
+  const url = ii.thumburl || ii.url; if (!safeUrl(url) || /\.tiff?$/i.test(url)) return null;
+  const m = ii.extmetadata || {}, v = k => clip(htmlText(m[k] && m[k].value), 140);
+  const lic = v("LicenseShortName"); if (lic && !PD.test(lic)) return null;
+  const fileTitle = pg.title.replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, "").replace(/_/g, " ");
+  return {id:"c" + pg.pageid, url, title: clip(v("ObjectName") || fileTitle, 140), maker: clip(v("Artist"), 80),
+          year: clip(v("DateTimeOriginal"), 40), link: safeUrl(ii.descriptionurl) || "https://commons.wikimedia.org/wiki/" + encodeURIComponent(pg.title), source:"Wikimedia Commons"};
+}
+async function loadCommons(set){
+  const out = [], seen = new Set(), visited = new Set(); let calls = 0, level = [set.query];
+  for (let depth = 0; depth <= 2 && level.length; depth++){
+    const nextLevel = [];
+    for (const title of depth ? shuffle(level) : level){
+      if (visited.has(title) || calls >= CONFIG.commonsCalls || out.length >= CONFIG.maxPerSet * 1.5) continue;
+      visited.add(title);
+      const files = []; let cont = {};
+      do {
+        const p = new URLSearchParams({action:"query", format:"json", formatversion:"2", origin:"*",
+          generator:"categorymembers", gcmtitle:title, gcmtype:"file|subcat", gcmlimit:"50",
+          prop:"imageinfo", iiprop:"url|mime|extmetadata", iiurlwidth:String(CONFIG.width),
+          iiextmetadatafilter:"ObjectName|Artist|DateTimeOriginal|LicenseShortName", ...cont});
+        const r = await queue(() => getJSON(COMMONS + "?" + p)); calls++;
+        for (const pg of (r.query && r.query.pages) || []){
+          if (pg.ns === 14){ nextLevel.push(pg.title); continue; }
+          const it = commonsItem(pg); if (it && !seen.has(it.id)){ seen.add(it.id); files.push(it); }
+        }
+        cont = r.continue;
+      } while (cont && calls < CONFIG.commonsCalls && files.length < CONFIG.maxPerSet);
+      // A small subcategory is usually one plate in several scans: take one of them.
+      out.push(...(depth > 0 && files.length <= 6 ? shuffle(files).slice(0, 1) : files));
+    }
+    level = nextLevel;
+  }
+  return shuffle(out).slice(0, CONFIG.maxPerSet);
+}
+
+/* ---------- Source: Art Institute of Chicago (search, public domain, IIIF images) ---------- */
+const AIC = "https://api.artic.edu/api/v1/artworks/search";
+async function loadAIC(set){
+  const f = CONFIG.aicFilter[set.cat] || {}, rx = s => s ? new RegExp(s, "i") : null;
+  const type = rx(f.type), medium = rx(f.medium), exclude = rx(f.exclude), out = [];
+  for (let page = 1; page <= CONFIG.aicPages; page++){
+    const p = new URLSearchParams({q:set.query, "query[term][is_public_domain]":"true", limit:"100", page:String(page),
+      fields:"id,title,artist_title,artist_display,date_display,image_id,is_public_domain,classification_title,artwork_type_title,medium_display"});
+    const r = await queue(() => getJSON(AIC + "?" + p));
+    const iiif = safeUrl(r.config && r.config.iiif_url) || "https://www.artic.edu/iiif/2";
+    for (const a of r.data || []){
+      if (!a.image_id || a.is_public_domain === false) continue;
+      if (type && !type.test(`${a.artwork_type_title || ""} ${a.classification_title || ""}`)) continue;
+      if (medium && !medium.test(`${a.medium_display || ""} ${a.classification_title || ""}`)) continue;
+      if (exclude && exclude.test(a.title || "")) continue;
+      out.push({id:"a" + a.id, url:`${iiif}/${encodeURIComponent(a.image_id)}/full/843,/0/default.jpg`, title: clip(a.title || "Untitled", 140),
+        maker: clip(a.artist_title || String(a.artist_display || "").split("\n")[0], 80), year: clip(a.date_display, 40),
+        link:`https://www.artic.edu/artworks/${encodeURIComponent(a.id)}`, source:"Art Institute of Chicago"});
+    }
+    if (!r.pagination || page >= r.pagination.total_pages) break;
+  }
+  return out.slice(0, CONFIG.maxPerSet);
+}
+
+/* ---------- Loading sets, cached on the device ---------- */
+const sets = CONFIG.sets.map(set => ({set, status:"waiting", items:[], err:""}));
+let local = [];                                    // your own images
+const rejected = new Set(store.get("sk1:rejected") || []);
+const selected = new Set(CONFIG.sets.map(s => s.cat));
+const cacheKey = set => "sk1:set:" + JSON.stringify([set.source, set.query, CONFIG.aicFilter[set.cat] || null, CONFIG.width, CONFIG.maxPerSet]);
+function applySet(st, raw, status){
+  st.items = raw.map(o => ({...o, ck: st.set.cat, d: st.set.level || CATS.get(st.set.cat).d, grp: st.set.name, src:"web"}));
+  st.status = raw.length ? status : "empty"; refresh();
+}
+async function loadSet(st, fresh){
+  const key = cacheKey(st.set), c = !fresh && store.get(key);
+  if (c && c.items && Date.now() - c.t < CONFIG.cacheHours * 36e5) return applySet(st, c.items, "ok");
+  st.status = "loading"; refresh();
+  try {
+    const raw = await (st.set.source === "aic" ? loadAIC : loadCommons)(st.set);
+    if (raw.length) store.set(key, {t: Date.now(), items: raw});
+    applySet(st, raw, "ok");
+  } catch (e){ st.status = "error"; st.err = e.message || String(e); refresh(); }
+}
+const loadAll = fresh => Promise.all(sets.map(st => loadSet(st, fresh)));
+const busy = st => st.status === "loading" || st.status === "waiting";
+
+function pool(){
+  const out = [], ids = new Set();
+  for (const it of sets.flatMap(s => s.items).concat(local)) if (!ids.has(it.id) && !rejected.has(it.id)){ ids.add(it.id); out.push(it); }
+  return out;
+}
+const sessionPool = () => pool().filter(p => selected.has(p.ck) && !p.bad);
+
+/* ---------- Session plans ---------- */
+const PLANS = [
+  {id:"gesture", t:"Gesture sprint", s:"20 × 30 s", seg:[[30,20]]},
+  {id:"buildup", t:"Build-up · 30 min", s:"8×30s · 4×1m · 2×3m · 1×10m", seg:[[30,8],[60,4],[180,2],[600,1]]},
+  {id:"class",   t:"Class · 1 hour", s:"10×30s · 5×1m · 3×5m · 2×10m · 1×15m", seg:[[30,10],[60,5],[300,3],[600,2],[900,1]]},
+  {id:"study",   t:"Study", s:"3 × 20 min", seg:[[1200,3]]},
+  {id:"free",    t:"Free", s:"your choice", seg:null},
+];
+let planId = "buildup";
+const fmt = s => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return h ? `${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}` : `${m}:${String(x).padStart(2,"0")}`; };
+const fmtL = s => s < 60 ? `${s} s` : s % 60 ? `${Math.floor(s/60)}m${s%60}s` : `${s/60} min`;
+const segments = () => planId === "free" ? [[+$("freeDur").value, +$("freeCount").value]] : PLANS.find(p => p.id === planId).seg;
+
+function renderPlans(){
+  $("plans").innerHTML = "";
+  for (const p of PLANS){
+    const b = document.createElement("button"); b.className = "plan"; b.dataset.plan = p.id; b.setAttribute("aria-pressed", p.id === planId);
+    const lad = p.seg ? p.seg.map(([d,n]) => Array.from({length:Math.min(n,8)}, () => `<i style="height:${Math.max(4,Math.min(22,Math.log2(d/15)*5))}px"></i>`).join("")).join("")
+                      : `<i style="height:10px;opacity:.35"></i>`.repeat(3);
+    b.innerHTML = `<span class="t">${p.t}</span><span class="s">${p.s}</span><span class="ladder">${lad}</span>`;
+    b.onclick = () => { planId = p.id; renderPlans(); $("free").classList.toggle("on", p.id === "free"); updateSum(); };
+    $("plans").appendChild(b);
+  }
+}
+
+/* ---------- Settings view ---------- */
+const status = (t, err) => { $("status").textContent = t; $("status").className = "status" + (err ? " err" : ""); };
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+function refresh(){ renderCats(); renderSets(); updateSum(); }
+function renderCats(){
+  const by = new Map(), get = k => by.get(k) || by.set(k, {cat:CATS.get(k), n:0, lo:3, hi:1, sets:0, busy:0, failed:0}).get(k);
+  for (const st of sets){ const e = get(st.set.cat); e.sets++; if (busy(st)) e.busy++; if (st.status === "error") e.failed++; }
+  for (const it of pool()){ const e = get(it.ck); e.n++; e.lo = Math.min(e.lo, it.d); e.hi = Math.max(e.hi, it.d); }
+  const el = $("cats"); el.innerHTML = "";
+  for (const [k, e] of [...by].sort((a, b) => a[1].cat.d - b[1].cat.d || a[1].cat.name.localeCompare(b[1].cat.name))){
+    const lab = document.createElement("label"); lab.className = "cat"; lab.dataset.cat = k;
+    const dots = e.n ? "●".repeat(e.hi) + "○".repeat(3 - e.hi) : "";
+    const lvl = e.n ? `level ${e.lo === e.hi ? e.lo : e.lo + "–" + e.hi}` : "";
+    const extra = [e.sets ? plural(e.sets, "set") : "own folder", e.busy ? "loading…" : "", e.failed ? `${e.failed} failed` : ""].filter(Boolean).join(" · ");
+    lab.innerHTML = `<input type="checkbox" ${selected.has(k) ? "checked" : ""}><span><span class="n">${esc(e.cat.name)}</span><br><span class="m">${plural(e.n, "image")}${lvl ? " · " + lvl : ""} <span class="dots">${dots}</span><br>${esc(extra)}</span></span>`;
+    lab.querySelector("input").onchange = ev => { ev.target.checked ? selected.add(k) : selected.delete(k); updateSum(); };
+    el.appendChild(lab);
+  }
+}
+function updateSum(){
+  const segs = segments(), total = segs.reduce((a,[d,n]) => a + d*n, 0), poses = segs.reduce((a,[,n]) => a + n, 0);
+  const avail = sessionPool().length, loading = sets.some(busy);
+  $("sum").textContent = `${poses} poses · ${fmt(total)}` + (avail ? ` · ${plural(avail, "image")} in the pot` : loading ? " · loading sources…" : "");
+  // Start as soon as there is enough to fill the session, or everything has arrived.
+  $("startBtn").disabled = !(avail >= poses || (avail > 0 && !loading));
+}
+
+/* ---------- Your own images: path = Folder/Subfolder/file → category = first subfolder ---------- */
+function fromFiles(files){
+  const items = [];
+  for (const f of files){
+    if (!/^image\//.test(f.type)) continue;
+    const parts = (f.webkitRelativePath || f.name).split("/");
+    const folder = parts.length > 2 ? parts[1] : (parts.length === 2 ? parts[0] : "Single images");
+    const cat = catForFolder(folder);
+    items.push({id:"l" + Math.random().toString(36).slice(2), title: f.name.replace(/\.[a-z0-9]+$/i, ""), maker:"own folder", year:"", link:"", source:"",
+                ck: cat.key, d: levelOf(parts.join("/")) || cat.d, grp: folder, src:"local", file: f});
+    selected.add(cat.key);
+  }
+  local = local.concat(items);
+  status(items.length ? `${plural(items.length, "image")} of your own added.` : "No images found in that selection.", !items.length);
+  refresh();
+}
+$("dirInput").onchange = e => fromFiles(e.target.files);
+$("fileInput").onchange = e => fromFiles(e.target.files);
+const srcOf = it => it.src === "local" ? (it.url = it.url || URL.createObjectURL(it.file)) : it.url;
+
+/* ---------- Review: 20 per set, reject per image, copy the verdict ---------- */
+let revSet = null;
+function renderSets(){
+  const el = $("sets"); el.innerHTML = "";
+  sets.forEach((st, i) => {
+    const row = document.createElement("div"); row.className = "set";
+    const n = st.items.filter(x => !rejected.has(x.id)).length;
+    const state = {waiting:"waiting", loading:"loading…", ok:plural(n, "image"), empty:"0 images: this search set returns nothing", error:`failed: ${st.err}`}[st.status];
+    row.innerHTML = `<div><b>${esc(st.set.name)}</b> <span class="status${st.status === "error" || st.status === "empty" ? " err" : ""}">${esc(state)}</span><div class="q">${esc(st.set.source)} · ${esc(st.set.query)} · n${st.set.level}</div></div>`;
+    const b = document.createElement("button"); b.className = "btn small"; b.textContent = revSet === i ? "Hide" : "Show 20"; b.dataset.set = i;
+    b.disabled = !st.items.length; b.onclick = () => { revSet = revSet === i ? null : i; if (revSet !== null && !st.sample) st.sample = shuffle(st.items.slice()).slice(0, 20); renderSets(); renderReview(); };
+    row.appendChild(b); el.appendChild(row);
+  });
+}
+function renderReview(){
+  const el = $("rev"); el.innerHTML = "";
+  if (revSet === null) return;
+  for (const it of sets[revSet].sample || []){
+    const fig = document.createElement("figure"); fig.classList.toggle("nee", rejected.has(it.id));
+    fig.innerHTML = `<button type="button" title="Tap to reject or restore"><img loading="lazy" alt="" src="${esc(it.url)}"></button>
+      <figcaption>${esc(it.title)}<span>${esc([it.maker, it.year].filter(Boolean).join(" · "))}</span><a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">${esc(it.source)} ↗</a></figcaption>`;
+    fig.querySelector("img").onerror = () => fig.classList.add("broken");
+    fig.querySelector("button").onclick = () => {
+      rejected.has(it.id) ? rejected.delete(it.id) : rejected.add(it.id);
+      store.set("sk1:rejected", [...rejected]); fig.classList.toggle("nee", rejected.has(it.id)); renderCats(); updateSum();
+    };
+    el.appendChild(fig);
+  }
+}
+$("copyVerdict").onclick = async () => {
+  const lines = [`Schetsklok · verdict ${new Date().toISOString().slice(0, 10)}`];
+  for (const st of sets){
+    const seen = st.sample || [], no = seen.filter(x => rejected.has(x.id));
+    lines.push(`\n${st.set.name} (${st.set.source}: ${st.set.query}): ${st.items.length} found, ` + (seen.length ? `${seen.length} reviewed, ${no.length} rejected` : "not reviewed"));
+    for (const x of no) lines.push(`  ✕ ${x.title} — ${x.maker || "?"} · ${x.link}`);
+  }
+  const text = lines.join("\n");
+  try { await navigator.clipboard.writeText(text); $("keurStatus").textContent = "Verdict copied."; $("verdictOut").hidden = true; }
+  catch { $("verdictOut").value = text; $("verdictOut").hidden = false; $("verdictOut").select(); $("keurStatus").textContent = "Copying failed; select the text below."; }
+};
+$("refetch").onclick = () => { for (const st of sets) st.sample = null; revSet = null; renderReview(); loadAll(true); };
+
+/* ---------- Building a session ----------
+   Each pose duration gets a target level: the shortest duration in the plan gets the lowest level in the pot,
+   the longest the highest. Within that level: first a random category, then a set, then an image,
+   so one large set does not crowd out the rest. */
+function byKey(list, f){ const m = new Map(); for (const x of list){ const k = f(x); m.has(k) ? m.get(k).push(x) : m.set(k, [x]); } return [...m.values()]; }
+const balanced = list => pickRandom(pickRandom(byKey(pickRandom(byKey(list, p => p.ck)), p => p.grp)));
+function pickFor(want, cand, used){
+  const levels = shuffle([...new Set(cand.map(p => p.d))]).sort((a, b) => Math.abs(a - want) - Math.abs(b - want));
+  for (const L of levels){ const free = cand.filter(p => p.d === L && !used.has(p.id) && !p.bad); if (free.length) return balanced(free); }
+  const ok = cand.filter(p => !p.bad); return ok.length ? balanced(ok) : null;   // pot exhausted: reuse
+}
+function build(){
+  const lvl = +$("level").value, segs = segments(), slots = [];
+  segs.forEach(([d, n], si) => { for (let i = 0; i < n; i++) slots.push({dur:d, seg:si}); });
+  let cand = sessionPool();
+  const cap = {1:[1,2], 2:[1,3], 3:[2,3]}[lvl];
+  const inRange = cand.filter(p => p.d >= cap[0] && p.d <= cap[1]); if (inRange.length >= Math.min(slots.length, 4)) cand = inRange;
+  const lv = cand.map(p => p.d), lo = Math.min(...lv), hi = Math.max(...lv);
+  const durs = [...new Set(slots.map(s => s.dur))].sort((a, b) => a - b), used = new Set();
+  for (const s of slots){
+    const t = durs.length > 1 ? durs.indexOf(s.dur) / (durs.length - 1) : Math.min(1, Math.max(0, Math.log2(s.dur / 30) / Math.log2(40)));
+    s.want = lo + t * (hi - lo); s.it = pickFor(s.want, cand, used); used.add(s.it.id);
+  }
+  return {slots, cand};
+}
+
+/* ---------- Loading images without empty screens ----------
+   Every image is preloaded; if that fails within 20 s, the slot switches to another image
+   of the same level. Only an image that is already loaded ever reaches the screen. */
+let S = null, wake = null, actx = null;
+const img = $("img");
+function loadImg(it){
+  if (!S.imgs.has(it.id)) S.imgs.set(it.id, new Promise((res, rej) => {
+    const im = new Image(), t = setTimeout(() => { im.src = ""; rej(new Error("timeout")); }, 20000);
+    im.onload = () => { clearTimeout(t); im.naturalWidth > 1 ? res(im) : rej(new Error("empty image")); };
+    im.onerror = () => { clearTimeout(t); rej(new Error("load error")); };
+    im.src = srcOf(it);
+  }).catch(e => { S && S.imgs.delete(it.id); throw e; }));
+  return S.imgs.get(it.id);
+}
+function ensure(i){
+  const s = S.slots[i], sess = S;
+  return s.ready || (s.ready = (async () => {
+    for (let t = 0; t < 20; t++){   // with 60% broken images, 20 misses in a row is < 1 in 25,000
+      try { await loadImg(s.it); return true; }
+      catch {
+        if (sess !== S) return false;
+        s.it.bad = true; sess.swaps.push(s.it.id);
+        const inUse = new Set(sess.slots.map(x => x.it.id)), r = pickFor(s.want, sess.cand, inUse);
+        if (!r) return false; s.it = r;
+      }
+    }
+    return false;
+  })());
+}
+function preloadAll(){   // two workers run ahead through the whole session
+  const sess = S; let k = 0;
+  const worker = async () => { while (sess === S && k < sess.slots.length) await ensure(k++); };
+  worker(); worker();
+}
+
+/* ---------- Playback ---------- */
+function tick(){
+  if (!actx || !$("optSound").checked) return;
+  const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.08, actx.currentTime); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime + .18);
+  o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + .2);
+}
+function setMeta(s, i){
+  const segs = segments(), seg = segs[s.seg], segIdx = S.slots.filter((x, k) => k <= i && x.seg === s.seg).length, it = s.it;
+  $("mA").textContent = it.title + (it.maker || it.year ? " — " + [it.maker, it.year].filter(Boolean).join(", ") : "");
+  const b = $("mB"); b.textContent = "";
+  if (it.link){ const a = document.createElement("a"); a.href = it.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = it.source + " ↗"; b.append(a, " · "); }
+  b.append(`pose ${i+1}/${S.slots.length} · block ${s.seg+1}: ${segIdx}/${seg[1]} × ${fmtL(s.dur)} · ${CATS.get(it.ck).name} n${it.d}`);
+}
+async function show(i){
+  const s = S.slots[i], sess = S; S.i = i; S.left = s.dur; S.ready = false; S.pendingBreak = null;
+  $("brk").hidden = true; $("loading").hidden = false;
+  const ok = await ensure(i);
+  if (sess !== S || S.i !== i) return;
+  if (!ok){ $("loading").textContent = "No usable image found. Next…"; setTimeout(() => { if (sess === S && S.i === i) next(); }, 1200); return; }
+  const im = await loadImg(s.it).catch(() => null);
+  if (sess !== S || S.i !== i) return;
+  if (!im) { s.ready = null; return show(i); }
+  img.src = im.src; await img.decode().catch(() => {});
+  if (sess !== S || S.i !== i) return;
+  setMeta(s, i); $("loading").hidden = true; $("loading").textContent = "loading image…";
+  S.ready = true; S.history.push(s.it); S.log.push({i, id:s.it.id, w: img.naturalWidth, h: img.naturalHeight}); placeGrid();
+}
+function next(){
+  if (!S || S.over) return;
+  if (S.pendingBreak != null) return show(S.pendingBreak);
+  const i = S.i + 1;
+  if (i >= S.slots.length) return finish();
+  if ($("optBreak").checked && S.slots[i].seg !== S.slots[S.i].seg){
+    S.ready = false; S.pendingBreak = i; const seg = segments()[S.slots[i].seg];
+    $("brkT").textContent = `${seg[1]} × ${fmtL(seg[0])}`; $("brkS").textContent = "Take a fresh sheet. Continue when you're ready.";
+    $("brk").hidden = false; return;
+  }
+  show(i);
+}
+function prev(){ if (!S || S.over) return; if (S.pendingBreak != null) return show(S.i); if (S.i > 0) show(S.i - 1); }
+function finish(){
+  const mins = Math.round((Date.now() - S.t0) / 60000);
+  $("finT").textContent = `${S.history.length} poses in ${mins} min`;
+  const th = $("thumbs"); th.innerHTML = "";
+  for (const it of S.history.slice(-24)){ const m = new Image(); m.src = srcOf(it); m.alt = ""; th.appendChild(m); }
+  $("fin").hidden = false; S.ready = false; S.over = true;
+}
+let last = performance.now();
+function loop(){
+  const now = performance.now(), dt = Math.min(2, (now - last) / 1000); last = now;
+  if (S && S.ready && !S.paused && !S.over){ S.left -= dt; if (S.left <= 0){ tick(); next(); } }
+  if (S){
+    const s = S.slots[Math.min(S.i, S.slots.length - 1)];
+    $("clock").textContent = fmt(S.left); $("clock").classList.toggle("warn", S.left <= 10 && s.dur >= 60 || S.left <= 5);
+    $("bar").style.width = (100 * (1 - S.left / s.dur)) + "%";
+  }
+}
+setInterval(loop, 250);
+
+async function start(){
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  const {slots, cand} = build();
+  if (!slots.length || slots.some(s => !s.it)) return;
+  S = {slots, cand, i:0, left:slots[0].dur, paused:false, t0:Date.now(), history:[], log:[], swaps:[], imgs:new Map()};
+  $("setup").hidden = true; $("stage").hidden = false; $("fin").hidden = true; $("bPause").textContent = "❚❚";
+  setToggle("bGray", $("optGray").checked); setToggle("bFlip", false); setToggle("bGrid", false);
+  try { wake = await navigator.wakeLock?.request("screen"); } catch {}
+  preloadAll(); show(0);
+}
+function stop(){ S = null; $("stage").hidden = true; $("setup").hidden = false; try { wake?.release(); } catch {} wake = null; if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {}); }
+function setToggle(id, on){
+  $(id).setAttribute("aria-pressed", on);
+  if (id === "bGray") img.classList.toggle("gray", on);
+  if (id === "bFlip") img.classList.toggle("flip", on);
+  if (id === "bGrid"){ $("grid").hidden = !on; placeGrid(); }
+}
+const flipT = id => setToggle(id, $(id).getAttribute("aria-pressed") !== "true");
+function placeGrid(){
+  const g = $("grid"); if (g.hidden || !img.naturalWidth) return;
+  const r = img.getBoundingClientRect(), v = $("view").getBoundingClientRect();
+  Object.assign(g.style, {left:(r.left - v.left) + "px", top:(r.top - v.top) + "px", width:r.width + "px", height:r.height + "px", backgroundSize:`${r.width/3}px ${r.height/3}px`});
+}
+window.addEventListener("resize", placeGrid);
+function togglePause(){ if (!S) return; S.paused = !S.paused; $("bPause").textContent = S.paused ? "▶︎ go" : "❚❚"; }
+function toggleFull(){ const d = document; if (d.fullscreenElement) d.exitFullscreen?.().catch(() => {}); else d.documentElement.requestFullscreen?.().catch(() => {}); }
+
+$("startBtn").onclick = start;
+$("bNext").onclick = () => next(); $("bPrev").onclick = prev; $("bPause").onclick = togglePause; $("bStop").onclick = stop; $("bFull").onclick = toggleFull;
+$("bGray").onclick = () => flipT("bGray"); $("bFlip").onclick = () => flipT("bFlip"); $("bGrid").onclick = () => flipT("bGrid");
+$("brkGo").onclick = () => S && S.pendingBreak != null && show(S.pendingBreak);
+$("again").onclick = start; $("back").onclick = stop;
+$("freeDur").onchange = updateSum; $("freeCount").onchange = updateSum;
+document.addEventListener("keydown", e => {
+  if ($("stage").hidden) return;
+  if (e.key === " "){ e.preventDefault(); togglePause(); }
+  else if (e.key === "ArrowRight") next(); else if (e.key === "ArrowLeft") prev();
+  else if (e.key === "Escape") stop();
+  else if (/^[gG]$/.test(e.key)) flipT("bGray"); else if (/^[fF]$/.test(e.key)) flipT("bFlip"); else if (/^[rR]$/.test(e.key)) flipT("bGrid");
+});
+document.addEventListener("visibilitychange", async () => { if (!document.hidden && S && !wake){ try { wake = await navigator.wakeLock?.request("screen"); } catch {} } });
+
+// For tests and the curious: read-only.
+window.schetsklok = {CONFIG, sets, pool, session: () => S};
+
+renderPlans(); refresh(); loadAll(false);
+})();
+</script>
+</body>
+</html>
