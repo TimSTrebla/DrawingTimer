@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16171a">
-<meta name="description" content="Timed figure-drawing practice with public-domain references from Wikimedia Commons and the Art Institute of Chicago.">
+<meta name="description" content="Timed drawing practice structured like an academy course, with public-domain and openly licensed references from Wikimedia Commons, the Art Institute of Chicago and the Cleveland Museum of Art.">
 <title>Schetsklok · sketch clock</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap">
@@ -25,9 +25,9 @@ body{background:var(--graphite);color:var(--paper);font-family:var(--f-display);
 button,select,input{font:inherit;color:inherit}
 a{color:var(--sanguine)}
 :focus-visible{outline:2px solid var(--sanguine);outline-offset:2px}
-.wrap{max-width:980px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+.wrap{max-width:1040px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
 header h1{font-size:2.1rem;font-weight:700;letter-spacing:-.01em;margin:0}
-header p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+header p{margin:4px 0 0;color:var(--muted);max-width:68ch}
 .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
 section{display:grid;gap:12px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -41,17 +41,24 @@ select{background:var(--slate);border:1px solid var(--line);border-radius:4px;pa
 .note b{color:var(--paper);font-weight:500}
 .status{font-family:var(--f-mono);font-size:.82rem;color:var(--muted)}
 .status.err{color:var(--sanguine)}
-.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.groups{display:grid;gap:18px}
+.group{display:grid;gap:8px}
+.group h3{margin:0;font-size:1rem;font-weight:600;display:flex;gap:10px;align-items:baseline}
+.group h3 span{font-weight:400;color:var(--muted);font-size:.85rem}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
 .cat{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:4px;cursor:pointer}
-.cat input{margin-top:3px;accent-color:var(--sanguine);width:18px;height:18px}
+.cat:has(input:checked){border-color:color-mix(in srgb,var(--sanguine) 55%,var(--line))}
+.cat input{margin-top:3px;accent-color:var(--sanguine);width:18px;height:18px;flex:none}
 .cat .n{font-weight:600}
-.cat .m{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.cat .about{display:block;font-size:.84rem;color:var(--muted);line-height:1.35;margin:2px 0 6px}
+.cat .m{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
 .dots{letter-spacing:2px;color:var(--sanguine)}
-.plans{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.plans{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .plan{text-align:left;display:grid;gap:4px;padding:12px;border:1px solid var(--line);border-radius:4px;background:transparent;cursor:pointer}
 .plan[aria-pressed=true]{border-color:var(--sanguine);background:color-mix(in srgb,var(--sanguine) 10%,transparent)}
 .plan .t{font-weight:600}
 .plan .s{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.plan .h{font-size:.8rem;color:var(--muted)}
 .ladder{display:flex;gap:3px;align-items:flex-end;height:22px}
 .ladder i{display:block;width:6px;background:var(--sanguine);opacity:.75;border-radius:1px}
 .free{display:none;gap:8px}
@@ -62,10 +69,10 @@ select{background:var(--slate);border:1px solid var(--line);border-radius:4px;pa
 .summary .big{font-family:var(--f-mono);font-size:1.1rem}
 details{border:1px solid var(--line);border-radius:4px;padding:10px 14px}
 details summary{cursor:pointer;font-weight:600;min-height:28px}
-details code{font-family:var(--f-mono);font-size:.82rem;color:var(--paper)}
 .tree{font-family:var(--f-mono);font-size:.8rem;color:var(--paper);background:var(--slate);padding:10px;border-radius:4px;overflow-x:auto;white-space:pre;margin:8px 0}
 /* Review */
 .sets{display:grid;gap:6px;margin:10px 0}
+.sets h4{margin:10px 0 0;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .set{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0}
 .set .q{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);word-break:break-word}
 .rev{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
@@ -113,12 +120,12 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
   <header>
     <div class="lbl">Timed drawing practice</div>
     <h1>Schetsklok</h1>
-    <p>Public-domain references from Wikimedia Commons and the Art Institute of Chicago, plus your own folder. In a class session the poses grow from gesture to study, and the images grow with them from simple to complex.</p>
+    <p>Set up like an academy course: foundations, the figure, the masters, composition, colour. References come from Wikimedia Commons, the Art Institute of Chicago and the Cleveland Museum of Art (public domain or CC&nbsp;BY), plus your own folder. In a class session the poses grow longer, and the images grow with them from simple to complex.</p>
   </header>
 
   <section>
-    <div class="lbl">1 · Categories</div>
-    <div class="cats" id="cats"></div>
+    <div class="lbl">1 · What to study</div>
+    <div class="groups" id="cats"></div>
     <div class="row">
       <label class="btn" for="dirInput">Add your own folder…</label>
       <input type="file" id="dirInput" webkitdirectory multiple hidden>
@@ -134,10 +141,10 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
     <div class="free" id="free">
       <select id="freeDur" aria-label="Time per pose">
         <option value="30">30 seconds</option><option value="45">45 seconds</option><option value="60" selected>1 minute</option>
-        <option value="120">2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="1200">20 minutes</option>
+        <option value="120">2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="1200">20 minutes</option><option value="2700">45 minutes</option>
       </select>
       <select id="freeCount" aria-label="Number of poses">
-        <option>5</option><option selected>10</option><option>20</option><option>40</option>
+        <option>1</option><option>3</option><option>5</option><option selected>10</option><option>20</option><option>40</option>
       </select>
     </div>
     <div class="row opts">
@@ -160,21 +167,21 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
 
   <details id="keur">
     <summary>Review sources · 20 per set</summary>
-    <p class="note">See a sample of 20 from each search set. Tap an image to reject it: it then stays out of sessions on this device. <b>Copy verdict</b> puts your findings on the clipboard, so the search set itself can be improved.</p>
-    <div class="sets" id="sets"></div>
-    <div class="row"><button class="btn small" id="copyVerdict">Copy verdict</button><button class="btn small" id="refetch">Fetch sources again</button><span class="status" id="keurStatus"></span></div>
+    <p class="note">See a sample of 20 from each search set. Tap an image to reject it: it then stays out of sessions on this device. <b>Copy verdict</b> puts your findings on the clipboard, so the search set itself can be improved. Only sets of selected categories are loaded; <b>Load all sets</b> fetches the rest.</p>
+    <div class="row"><button class="btn small" id="copyVerdict">Copy verdict</button><button class="btn small" id="loadAllBtn">Load all sets</button><button class="btn small" id="refetch">Fetch loaded sets again</button><span class="status" id="keurStatus"></span></div>
     <textarea id="verdictOut" hidden readonly></textarea>
+    <div class="sets" id="sets"></div>
     <div class="rev" id="rev"></div>
   </details>
 
   <details>
     <summary>Your own folder: how to organise it</summary>
-    <p class="note">Subfolders become categories; a folder named after an existing category (Engraving, Drawing…) joins it. Put <b>n1</b>, <b>n2</b> or <b>n3</b> in a folder or file name to set the difficulty; without a label an image gets its category's default level. The images stay on your device.</p>
+    <p class="note">Subfolders become categories; a folder named after a category (Anatomy, Hands, Pastel…; Dutch names work too) joins it. Put <b>n1</b>, <b>n2</b> or <b>n3</b> in a folder or file name to set the difficulty; without a label an image gets its category's default level. The images stay on your device.</p>
     <div class="tree">Schetsklok/
   AI/                 ← your own generations
     n1 simple/
     n3 busy scenes/
-  Engraving/          ← adds to the online engravings
+  Hands/              ← adds to the online hand studies
   Sculpture/</div>
   </details>
 </div>
@@ -209,41 +216,118 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
 "use strict";
 
 /* ===================================================================================
-   CONFIG — edit the sources here. One line per fixed search set.
-   source "commons": query = a category on Wikimedia Commons (subcategories are included).
-   source "aic":     query = a search term at the Art Institute of Chicago (public domain only),
-                     then filtered with the category's aicFilter.
-   level: 1 simple · 2 medium · 3 complex. Short poses get low levels.
-   keywords: recognise subfolders of your own folder (English and Dutch).
+   CONFIG — edit the course here.
+   categories: what you can tick, grouped like an academy course. level = default difficulty
+               (1 simple · 2 medium · 3 complex; short poses get low levels). keywords recognise
+               subfolders of your own folder (English and Dutch): a keyword matches at the start of a
+               word ("ets" → "Etsen", not "Schetsen"); "~" matches anywhere ("~tekening" → "Krijttekeningen").
+               The first matching category wins.
+   sets: one line per fixed search set.
+     source "commons": query = a Wikimedia Commons category (subcategories included, max `calls` API calls).
+     source "aic":     query = search term at the Art Institute of Chicago (public domain only).
+     source "cma":     query = search term at the Cleveland Museum of Art (CC0 only); type = Painting | Drawing | Print | Sculpture.
+     Optional filters (regular expressions, case-insensitive):
+       type    AIC: artwork type/classification, e.g. "drawing", "painting", "print", "sculpture"
+       medium  AIC: medium_display · CMA: technique
+       style   AIC: style; soft — ignored when fewer than 12 works match it
+       exclude title words you do not want (all sources; Commons sets always drop blank pages, covers and the like)
    =================================================================================== */
+const NO_SCENERY = "landscape|view of|\\bview\\b|tree|river|harbou?r|city|street|church|architect|ornament|design for|\\bmap\\b|ship|boat|still life";
+const NO_FRONTMATTER = "\\bblank\\b|title ?page|frontispiece|\\bindex\\b|\\bbinding\\b|\\bcover\\b|\\binitials\\b|decorated initial|historiated initial|text page";   // always applied to Commons sets
 const CONFIG = {
+  licences: "pd+by",   // "pd" = public domain / CC0 only · "pd+by" = also CC BY (licence shown with every image)
+  defaults: ["drawing", "engraving"],
+  groups: [
+    ["Foundations", "proportion, structure, value"],
+    ["Figure", "gesture and the body"],
+    ["Masters & media", "copying technique"],
+    ["Composition", "staging many figures"],
+    ["Colour & modern", "light, colour, and beyond the subject"],
+    ["Your own", "from your folder"],
+  ],
   categories: {
-    drawing:    {name:"Drawing",      level:1, keywords:["drawing","tekening","sketch","schets","chalk","krijt","sanguine","pencil","potlood","charcoal","houtskool"]},
-    sculpture:  {name:"Sculpture",    level:1, keywords:["sculpt","beeld","marble","marmer","bronze","brons","statue"]},
-    oil:        {name:"Oil painting", level:2, keywords:["oil","olie","painting","schilder","paint"]},
-    watercolour:{name:"Watercolour",  level:2, keywords:["watercol","aquarel","gouache"]},
-    ai:         {name:"AI images",    level:2, keywords:["ai","midjourney","flux","generat","sd"]},
-    engraving:  {name:"Engraving",    level:3, keywords:["engrav","gravure","graveer","etch","ets","doré","dore","woodcut","houtsnede","litho"]},
+    bargue:       {group:"Foundations", name:"Bargue & casts", level:1, about:"Contour, proportion and value: the academy's first year.", keywords:["bargue","cast","gips"]},
+    anatomy:      {group:"Foundations", name:"Anatomy", level:2, about:"Skeleton and muscle under the skin: Albinus, Vesalius, Leonardo.", keywords:["anatom","skelet","ecorche","écorché","spier","muscle"]},
+    hands:        {group:"Foundations", name:"Hands & feet", level:1, about:"The hardest small forms, as the masters studied them.", keywords:["hand","feet","foot","voet"]},
+    heads:        {group:"Foundations", name:"Heads", level:1, about:"Head studies: planes, features, expression.", keywords:["head","hoofd","face","gezicht","portret","portrait"]},
+    drapery:      {group:"Foundations", name:"Drapery", level:2, about:"Folds as form: how cloth follows the body.", keywords:["draper","plooi","fold"]},
+    gesture:      {group:"Figure", name:"Gesture & motion", level:1, about:"Muybridge's motion photographs: line of action, rhythm, balance.", keywords:["gesture","gebaar","motion","beweging","muybridge"]},
+    nude:         {group:"Figure", name:"Life drawing", level:1, about:"Academic nude studies (académies), drawn from the model.", keywords:["nude","naakt","akt","model"]},
+    engraving:    {group:"Masters & media", name:"Engraving & etching", level:3, about:"Doré, Dürer, Rembrandt, Goya: line, hatching, crowded scenes.", keywords:["engrav","gravure","graveer","etch","ets","doré","dore","litho"]},
+    woodblock:    {group:"Masters & media", name:"Japanese woodblock", level:2, about:"Hokusai, Utamaro, Hiroshige: flat shape, line and design.", keywords:["ukiyo","japan","woodblock","houtsnede","woodcut"]},
+    pastel:       {group:"Masters & media", name:"Pastel", level:2, about:"Degas, Cassatt and others: colour that is drawn, not painted.", keywords:["pastel"]},
+    oil:          {group:"Masters & media", name:"Oil: head & figure", level:2, about:"Master copies in oil: the painted head and figure.", keywords:["oil","olie","olieverf","schilder","painting"]},
+    sculpture:    {group:"Masters & media", name:"Sculpture", level:1, about:"Form in light: marble and bronze figures.", keywords:["sculpt","~beeldhouw","standbeeld","marble","marmer","bronze","brons","statue"]},
+    watercolour:  {group:"Masters & media", name:"Watercolour", level:2, about:"Your own watercolour references.", keywords:["watercol","aquarel","gouache"]},
+    composition:  {group:"Composition", name:"Great scenes", level:3, about:"History, myth and bible paintings: staging, flow, groups.", keywords:["composit","scene","history","historie"]},
+    colour:       {group:"Colour & modern", name:"Colour & light", level:2, about:"Landscapes and oil sketches: temperature, value, atmosphere.", keywords:["colour","color","kleur","landscape","landschap"]},
+    impressionism:{group:"Colour & modern", name:"Impressionism", level:2, about:"Monet to Van Gogh: broken colour, light and brushwork.", keywords:["impression"]},
+    expressionism:{group:"Colour & modern", name:"Expressionism", level:2, about:"Schiele, Kirchner and others: distortion and line as feeling.", keywords:["expression"]},
+    abstraction:  {group:"Colour & modern", name:"Abstraction", level:2, about:"Kandinsky, af Klint: composition and colour without a subject.", keywords:["abstract"]},
+    ai:           {group:"Your own", name:"AI images", level:2, about:"Your own generations.", keywords:["ai","midjourney","flux","generat","sd"]},
+    drawing:      {group:"Figure", name:"Figure studies", level:1, about:"Chalk and sanguine figure studies by the old masters.", keywords:["drawing","~tekening","sketch","~schets","chalk","krijt","sanguine","pencil","potlood","charcoal","houtskool"]},
   },
   sets: [
-    {cat:"engraving", name:"Doré · Divine Comedy",  source:"commons", query:"Category:Gustave Dore's illustrations to the Divine Comedy", level:3},
-    {cat:"engraving", name:"Doré · Bible",          source:"commons", query:"Category:Doré's English Bible", level:3},
-    {cat:"engraving", name:"Doré · Don Quixote",    source:"commons", query:"Category:Don Quijote illustrated by Gustave Doré", level:3},
-    {cat:"engraving", name:"Dürer · engravings",    source:"commons", query:"Category:Engravings by Albrecht Dürer", level:3},
-    {cat:"engraving", name:"Rembrandt · etchings",  source:"commons", query:"Category:Etchings by Rembrandt", level:3},
-    {cat:"drawing",   name:"Chalk figure studies",  source:"aic",     query:"chalk figure study", level:1},
-    {cat:"drawing",   name:"Red chalk (sanguine)",  source:"aic",     query:"red chalk study", level:1},
-    // Next step, once the sets above are reviewed: oil painting (figurative) and sculpture via AIC and The Met.
+    // Foundations
+    {cat:"bargue",  name:"Bargue drawing course I",      source:"commons", query:"Category:Bargue-Gérôme Drawing Course I", level:1},
+    {cat:"anatomy", name:"Albinus · skeleton & muscle",  source:"commons", query:"Category:Tabulae sceleti et musculorum corporis humani", level:2},
+    {cat:"anatomy", name:"Vesalius · Fabrica 1543",      source:"commons", query:"Category:De humani corporis fabrica 1543", level:2},
+    {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:24},
+    {cat:"anatomy", name:"Anatomical studies (AIC)",     source:"aic",     query:"anatomical study", type:"drawing|print", level:2},
+    {cat:"hands",   name:"Drawings of hands",            source:"commons", query:"Category:Drawings of hands", level:1, calls:20},
+    {cat:"hands",   name:"Hand studies (AIC)",           source:"aic",     query:"study of hands", type:"drawing", level:1},
+    {cat:"hands",   name:"Hand studies (Cleveland)",     source:"cma",     query:"hands", type:"Drawing", level:1},
+    {cat:"heads",   name:"Head studies (AIC)",           source:"aic",     query:"head study", type:"drawing", medium:"chalk|charcoal|crayon|graphite|pencil", exclude:NO_SCENERY, level:1},
+    {cat:"heads",   name:"Heads (Cleveland)",            source:"cma",     query:"head of", type:"Drawing", exclude:NO_SCENERY, level:1},
+    {cat:"drapery", name:"Leonardo · drapery",           source:"commons", query:"Category:Drawings of drapery by Leonardo da Vinci", level:2},
+    {cat:"drapery", name:"Drapery studies (AIC)",        source:"aic",     query:"drapery study", type:"drawing", level:2},
+    {cat:"drapery", name:"Drapery studies (Cleveland)",  source:"cma",     query:"drapery", type:"Drawing", level:2},
+    // Figure
+    {cat:"gesture", name:"Muybridge · motion studies",   source:"commons", query:"Category:Motion studies by Eadweard Muybridge", level:1, calls:24},
+    {cat:"drawing", name:"Chalk figure studies",         source:"aic",     query:"chalk figure study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1},
+    {cat:"drawing", name:"Red chalk (sanguine)",         source:"aic",     query:"red chalk study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1},
+    {cat:"drawing", name:"Figure studies (Cleveland)",   source:"cma",     query:"figure study", type:"Drawing", exclude:NO_SCENERY, level:1},
+    {cat:"nude",    name:"Nude studies (AIC)",           source:"aic",     query:"nude study", type:"drawing", exclude:NO_SCENERY, level:1},
+    {cat:"nude",    name:"Nude studies (Cleveland)",     source:"cma",     query:"nude", type:"Drawing", exclude:NO_SCENERY, level:1},
+    // Masters & media
+    {cat:"engraving", name:"Doré · Divine Comedy",       source:"commons", query:"Category:Gustave Dore's illustrations to the Divine Comedy", level:3},
+    {cat:"engraving", name:"Doré · Bible",               source:"commons", query:"Category:Doré's English Bible", level:3},
+    {cat:"engraving", name:"Doré · Don Quixote",         source:"commons", query:"Category:Don Quijote illustrated by Gustave Doré", level:3},
+    {cat:"engraving", name:"Dürer · engravings",         source:"commons", query:"Category:Engravings by Albrecht Dürer", level:3},
+    {cat:"engraving", name:"Rembrandt · etchings",       source:"commons", query:"Category:Etchings by Rembrandt", level:3},
+    {cat:"engraving", name:"Goya · Los Caprichos",       source:"commons", query:"Category:Los Caprichos", level:3, calls:24},
+    {cat:"woodblock", name:"Hokusai",                    source:"aic",     query:"Hokusai", type:"print", level:2},
+    {cat:"woodblock", name:"Utamaro",                    source:"aic",     query:"Utamaro", type:"print", level:2},
+    {cat:"woodblock", name:"Hiroshige",                  source:"aic",     query:"Hiroshige", type:"print", level:2},
+    {cat:"pastel",  name:"Pastels (AIC)",                source:"aic",     query:"pastel", type:"drawing|painting", medium:"pastel", level:2},
+    {cat:"pastel",  name:"Pastels (Cleveland)",          source:"cma",     query:"pastel", type:"Drawing", medium:"pastel", level:2},
+    {cat:"oil",     name:"Portraits in oil (AIC)",       source:"aic",     query:"portrait", type:"painting", medium:"oil", exclude:NO_SCENERY, level:2},
+    {cat:"oil",     name:"Portraits in oil (Cleveland)", source:"cma",     query:"portrait", type:"Painting", exclude:NO_SCENERY, level:2},
+    {cat:"oil",     name:"Figures in oil (AIC)",         source:"aic",     query:"figure", type:"painting", medium:"oil", exclude:NO_SCENERY, level:2},
+    {cat:"sculpture", name:"Marble & bronze (AIC)",      source:"aic",     query:"marble figure", type:"sculpture", level:1},
+    {cat:"sculpture", name:"Figures (Cleveland)",        source:"cma",     query:"figure", type:"Sculpture", level:1},
+    // Composition
+    {cat:"composition", name:"Battles & history (AIC)",  source:"aic",     query:"battle", type:"painting", level:3},
+    {cat:"composition", name:"Mythology (AIC)",          source:"aic",     query:"mythology", type:"painting", level:3},
+    {cat:"composition", name:"Bible scenes (Cleveland)", source:"cma",     query:"biblical", type:"Painting", level:3},
+    {cat:"composition", name:"Mythology (Cleveland)",    source:"cma",     query:"mythological", type:"Painting", level:3},
+    // Colour & modern
+    {cat:"colour",  name:"Landscape in oil (AIC)",       source:"aic",     query:"landscape", type:"painting", level:2},
+    {cat:"colour",  name:"Landscape (Cleveland)",        source:"cma",     query:"landscape", type:"Painting", level:2},
+    {cat:"impressionism", name:"Impressionism (AIC)",    source:"aic",     query:"impressionism", type:"painting", style:"impression", level:2},
+    {cat:"impressionism", name:"Post-Impressionism (AIC)",source:"aic",    query:"post-impressionism", type:"painting", style:"post-impression", level:2},
+    {cat:"impressionism", name:"Impressionism (Cleveland)",source:"cma",   query:"impressionism", type:"Painting", level:2},
+    {cat:"expressionism", name:"Schiele · drawings",     source:"commons", query:"Category:Drawings by Egon Schiele", level:2, calls:24},
+    {cat:"expressionism", name:"Expressionism (AIC)",    source:"aic",     query:"expressionism", type:"painting|print|drawing", style:"expression", level:2},
+    {cat:"expressionism", name:"Expressionism (Cleveland)",source:"cma",   query:"expressionism", level:2},
+    {cat:"abstraction", name:"Kandinsky · abstract",     source:"commons", query:"Category:Abstract paintings by Wassily Kandinsky", level:2, calls:24},
+    {cat:"abstraction", name:"af Klint · Paintings for the Temple", source:"commons", query:"Category:The Paintings for the Temple (Hilma af Klint)", level:2},
+    {cat:"abstraction", name:"Abstraction (AIC)",        source:"aic",     query:"abstraction", type:"painting", style:"abstract|cubis|futuris|suprematis|de stijl|neo-plastic", level:2},
   ],
-  // AIC filters per category (regular expressions, case-insensitive).
-  // type: on artwork_type_title + classification_title · medium: on medium_display · exclude: on the title.
-  aicFilter: {
-    drawing: {type:"drawing", medium:"chalk|charcoal|crayon|sanguine",
-              exclude:"landscape|view of|\\bview\\b|tree|river|harbou?r|city|street|church|architect|ornament|design for|\\bmap\\b|ship|boat|still life"},
-  },
   maxPerSet: 160,   // more is not needed and keeps loading fast
-  commonsCalls: 16, // max API calls per Commons set; each subcategory costs one
+  commonsCalls: 16, // default max API calls per Commons set; each subcategory costs one
   aicPages: 2,      // × 100 search results
+  cmaPages: 2,      // × 100 search results
   width: 1280,      // image width on Commons (one of Wikimedia's standard sizes)
   cacheHours: 72,   // keep search results on this device
 };
@@ -254,18 +338,28 @@ const safeUrl = u => /^https:\/\//i.test(u || "") ? u : "";
 const shuffle = a => { for (let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
 const pickRandom = a => a[Math.random()*a.length|0];
 const clip = (s, n) => (s = String(s || "").replace(/\s+/g, " ").trim()).length > n ? s.slice(0, n-1) + "…" : s;
+const rx = s => s ? new RegExp(s, "i") : null;
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const store = {
   get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
 
+/* ---------- Licences: public domain / CC0 always; CC BY when CONFIG.licences allows it ---------- */
+const isPD = l => /public domain|^pd\b|^pd-|cc0|cc-zero|no restrictions|mark 1\.0/i.test(l);
+const isBY = l => /^cc[- ]by(?![- ](sa|nc|nd))[- ]?\d/i.test(l);
+const licenceOK = l => !l || isPD(l) || (CONFIG.licences === "pd+by" && isBY(l));
+
 /* ---------- Categories ---------- */
-const CATS = new Map(Object.entries(CONFIG.categories).map(([key, c]) => [key, {key, name:c.name, d:c.level, kw:c.keywords}]));
+const keywordIn = (k, f) => { if (k[0] === "~") return f.includes(k.slice(1));
+  const e = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), edge = "[^a-z0-9à-ÿ]";   // word start; 1–2 letters: whole word
+  return new RegExp(`(^|${edge})${e}${k.length <= 2 ? `(${edge}|$)` : ""}`).test(f); };
+const CATS = new Map(Object.entries(CONFIG.categories).map(([key, c]) => [key, {key, name:c.name, d:c.level, kw:c.keywords, group:c.group, about:c.about}]));
 function catForFolder(folder){
   const f = (folder || "").toLowerCase();
-  for (const c of CATS.values()) if ((c.kw || []).some(k => k.length <= 2 ? new RegExp(`(^|[^a-z])${k}([^a-z]|$)`).test(f) : f.includes(k))) return c;
+  for (const c of CATS.values()) if ((c.kw || []).some(k => keywordIn(k, f))) return c;
   const key = "folder:" + f;
-  if (!CATS.has(key)) CATS.set(key, {key, name: folder || "Other", d:2, kw:[]});
+  if (!CATS.has(key)) CATS.set(key, {key, name: folder || "Other", d:2, kw:[], group:"Your own", about:"From your own folder."});
   return CATS.get(key);
 }
 const levelOf = s => { const m = /(?:^|[^a-z])n([123])(?:[^0-9]|$)/i.exec(s); if (m) return +m[1];
@@ -288,23 +382,26 @@ const htmlText = html => html ? (new DOMParser().parseFromString(String(html), "
 
 /* ---------- Source: Wikimedia Commons (category + subcategories, breadth-first) ---------- */
 const COMMONS = "https://commons.wikimedia.org/w/api.php";
-const PD = /public domain|^pd\b|^pd-|cc0|cc-zero|no restrictions|mark 1\.0/i;
-function commonsItem(pg){
+function commonsItem(pg, exclude){
   const ii = pg.imageinfo && pg.imageinfo[0]; if (!ii) return null;
   if (!/^image\/(jpeg|png|tiff|webp)$/.test(ii.mime || "")) return null;
   const url = ii.thumburl || ii.url; if (!safeUrl(url) || /\.tiff?$/i.test(url)) return null;
   const m = ii.extmetadata || {}, v = k => clip(htmlText(m[k] && m[k].value), 140);
-  const lic = v("LicenseShortName"); if (lic && !PD.test(lic)) return null;
+  const lic = v("LicenseShortName"); if (!licenceOK(lic)) return null;
   const fileTitle = pg.title.replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, "").replace(/_/g, " ");
-  return {id:"c" + pg.pageid, url, title: clip(v("ObjectName") || fileTitle, 140), maker: clip(v("Artist"), 80),
-          year: clip(v("DateTimeOriginal"), 40), link: safeUrl(ii.descriptionurl) || "https://commons.wikimedia.org/wiki/" + encodeURIComponent(pg.title), source:"Wikimedia Commons"};
+  const title = clip(v("ObjectName") || fileTitle, 140);
+  if (exclude && (exclude.test(title) || exclude.test(fileTitle))) return null;
+  return {id:"c" + pg.pageid, url, title, maker: clip(v("Artist"), 80), year: clip(v("DateTimeOriginal"), 40),
+          link: safeUrl(ii.descriptionurl) || "https://commons.wikimedia.org/wiki/" + encodeURIComponent(pg.title), source:"Wikimedia Commons", licence: lic || "Public domain"};
 }
 async function loadCommons(set){
-  const out = [], seen = new Set(), visited = new Set(); let calls = 0, level = [set.query];
+  const out = [], seen = new Set(), visited = new Set(), maxCalls = set.calls || CONFIG.commonsCalls;
+  const exclude = rx([NO_FRONTMATTER, set.exclude].filter(Boolean).join("|"));
+  let calls = 0, level = [set.query];
   for (let depth = 0; depth <= 2 && level.length; depth++){
     const nextLevel = [];
     for (const title of depth ? shuffle(level) : level){
-      if (visited.has(title) || calls >= CONFIG.commonsCalls || out.length >= CONFIG.maxPerSet * 1.5) continue;
+      if (visited.has(title) || calls >= maxCalls || out.length >= CONFIG.maxPerSet * 1.5) continue;
       visited.add(title);
       const files = []; let cont = {};
       do {
@@ -315,11 +412,11 @@ async function loadCommons(set){
         const r = await queue(() => getJSON(COMMONS + "?" + p)); calls++;
         for (const pg of (r.query && r.query.pages) || []){
           if (pg.ns === 14){ nextLevel.push(pg.title); continue; }
-          const it = commonsItem(pg); if (it && !seen.has(it.id)){ seen.add(it.id); files.push(it); }
+          const it = commonsItem(pg, exclude); if (it && !seen.has(it.id)){ seen.add(it.id); files.push(it); }
         }
         cont = r.continue;
-      } while (cont && calls < CONFIG.commonsCalls && files.length < CONFIG.maxPerSet);
-      // A small subcategory is usually one plate in several scans: take one of them.
+      } while (cont && calls < maxCalls && files.length < CONFIG.maxPerSet);
+      // A small subcategory is usually one work in several scans: take one of them.
       out.push(...(depth > 0 && files.length <= 6 ? shuffle(files).slice(0, 1) : files));
     }
     level = nextLevel;
@@ -330,11 +427,10 @@ async function loadCommons(set){
 /* ---------- Source: Art Institute of Chicago (search, public domain, IIIF images) ---------- */
 const AIC = "https://api.artic.edu/api/v1/artworks/search";
 async function loadAIC(set){
-  const f = CONFIG.aicFilter[set.cat] || {}, rx = s => s ? new RegExp(s, "i") : null;
-  const type = rx(f.type), medium = rx(f.medium), exclude = rx(f.exclude), out = [];
+  const type = rx(set.type), medium = rx(set.medium), style = rx(set.style), exclude = rx(set.exclude), loose = [], strict = [];
   for (let page = 1; page <= CONFIG.aicPages; page++){
     const p = new URLSearchParams({q:set.query, "query[term][is_public_domain]":"true", limit:"100", page:String(page),
-      fields:"id,title,artist_title,artist_display,date_display,image_id,is_public_domain,classification_title,artwork_type_title,medium_display"});
+      fields:"id,title,artist_title,artist_display,date_display,image_id,is_public_domain,classification_title,artwork_type_title,medium_display,style_titles,subject_titles"});
     const r = await queue(() => getJSON(AIC + "?" + p));
     const iiif = safeUrl(r.config && r.config.iiif_url) || "https://www.artic.edu/iiif/2";
     for (const a of r.data || []){
@@ -342,37 +438,71 @@ async function loadAIC(set){
       if (type && !type.test(`${a.artwork_type_title || ""} ${a.classification_title || ""}`)) continue;
       if (medium && !medium.test(`${a.medium_display || ""} ${a.classification_title || ""}`)) continue;
       if (exclude && exclude.test(a.title || "")) continue;
-      out.push({id:"a" + a.id, url:`${iiif}/${encodeURIComponent(a.image_id)}/full/843,/0/default.jpg`, title: clip(a.title || "Untitled", 140),
+      const it = {id:"a" + a.id, url:`${iiif}/${encodeURIComponent(a.image_id)}/full/843,/0/default.jpg`, title: clip(a.title || "Untitled", 140),
         maker: clip(a.artist_title || String(a.artist_display || "").split("\n")[0], 80), year: clip(a.date_display, 40),
-        link:`https://www.artic.edu/artworks/${encodeURIComponent(a.id)}`, source:"Art Institute of Chicago"});
+        link:`https://www.artic.edu/artworks/${encodeURIComponent(a.id)}`, source:"Art Institute of Chicago", licence:"Public domain"};
+      loose.push(it);
+      if (style && style.test([].concat(a.style_titles || [], a.subject_titles || []).join(" "))) strict.push(it);
     }
     if (!r.pagination || page >= r.pagination.total_pages) break;
+  }
+  return (style && strict.length >= 12 ? strict : loose).slice(0, CONFIG.maxPerSet);
+}
+
+/* ---------- Source: Cleveland Museum of Art (open access, CC0) ---------- */
+const CMA = "https://openaccess-api.clevelandart.org/api/artworks/";
+async function loadCMA(set){
+  const medium = rx(set.medium), exclude = rx(set.exclude), out = [];
+  let useType = !!set.type, typeRx = set.type ? new RegExp("^" + set.type, "i") : null;
+  for (let page = 0; page < CONFIG.cmaPages; page++){
+    const p = new URLSearchParams({q:set.query, cc0:"1", has_image:"1", limit:"100", skip:String(page * 100)});
+    if (useType) p.set("type", set.type);
+    const r = await queue(() => getJSON(CMA + "?" + p));
+    const data = r.data || [];
+    // If the type filter is not understood and returns nothing, search without it and filter here.
+    if (page === 0 && useType && !data.length){ useType = false; page = -1; continue; }
+    for (const a of data){
+      const url = a.images && a.images.web && a.images.web.url; if (!safeUrl(url)) continue;
+      if (a.share_license_status && a.share_license_status !== "CC0") continue;
+      if (typeRx && !typeRx.test(a.type || "")) continue;
+      if (medium && !medium.test(`${a.technique || ""} ${a.type || ""}`)) continue;
+      if (exclude && exclude.test(a.title || "")) continue;
+      const maker = ((a.creators && a.creators[0] && a.creators[0].description) || "").replace(/\s*\(.*$/, "");
+      out.push({id:"m" + a.id, url, title: clip(a.title || "Untitled", 140), maker: clip(maker, 80), year: clip(a.creation_date, 40),
+        link: safeUrl(a.url) || `https://www.clevelandart.org/art/${encodeURIComponent(a.accession_number || a.id)}`, source:"Cleveland Museum of Art", licence:"CC0"});
+    }
+    const total = (r.info && r.info.total) || 0;
+    if ((page + 1) * 100 >= total) break;
   }
   return out.slice(0, CONFIG.maxPerSet);
 }
 
-/* ---------- Loading sets, cached on the device ---------- */
-const sets = CONFIG.sets.map(set => ({set, status:"waiting", items:[], err:""}));
+/* ---------- Loading sets (only for selected categories), cached on the device ---------- */
+const LOADERS = {commons: loadCommons, aic: loadAIC, cma: loadCMA};
+const sets = CONFIG.sets.map(set => ({set, status:"idle", items:[], err:""}));
 let local = [];                                    // your own images
-const rejected = new Set(store.get("sk1:rejected") || []);
-const selected = new Set(CONFIG.sets.map(s => s.cat));
-const cacheKey = set => "sk1:set:" + JSON.stringify([set.source, set.query, CONFIG.aicFilter[set.cat] || null, CONFIG.width, CONFIG.maxPerSet]);
+const prefs = store.get("sk2:prefs") || {};
+const rejected = new Set(store.get("sk2:rejected") || store.get("sk1:rejected") || []);
+const selected = new Set((prefs.selected || CONFIG.defaults).filter(k => CATS.has(k)));
+const cacheKey = set => "sk2:set:" + JSON.stringify([set.source, set.query, set.type, set.medium, set.style, set.exclude, set.calls, CONFIG.licences, CONFIG.width, CONFIG.maxPerSet]);
+const busy = st => st.status === "loading";
 function applySet(st, raw, status){
   st.items = raw.map(o => ({...o, ck: st.set.cat, d: st.set.level || CATS.get(st.set.cat).d, grp: st.set.name, src:"web"}));
   st.status = raw.length ? status : "empty"; refresh();
 }
 async function loadSet(st, fresh){
+  if (busy(st) || (!fresh && (st.status === "ok" || st.status === "empty"))) return;
   const key = cacheKey(st.set), c = !fresh && store.get(key);
   if (c && c.items && Date.now() - c.t < CONFIG.cacheHours * 36e5) return applySet(st, c.items, "ok");
   st.status = "loading"; refresh();
   try {
-    const raw = await (st.set.source === "aic" ? loadAIC : loadCommons)(st.set);
+    const raw = await LOADERS[st.set.source](st.set);
     if (raw.length) store.set(key, {t: Date.now(), items: raw});
     applySet(st, raw, "ok");
   } catch (e){ st.status = "error"; st.err = e.message || String(e); refresh(); }
 }
-const loadAll = fresh => Promise.all(sets.map(st => loadSet(st, fresh)));
-const busy = st => st.status === "loading" || st.status === "waiting";
+const loadCategory = k => Promise.all(sets.filter(st => st.set.cat === k).map(st => loadSet(st)));
+const loadSelected = () => Promise.all([...selected].map(loadCategory));
 
 function pool(){
   const out = [], ids = new Set();
@@ -383,53 +513,71 @@ const sessionPool = () => pool().filter(p => selected.has(p.ck) && !p.bad);
 
 /* ---------- Session plans ---------- */
 const PLANS = [
-  {id:"gesture", t:"Gesture sprint", s:"20 × 30 s", seg:[[30,20]]},
-  {id:"buildup", t:"Build-up · 30 min", s:"8×30s · 4×1m · 2×3m · 1×10m", seg:[[30,8],[60,4],[180,2],[600,1]]},
-  {id:"class",   t:"Class · 1 hour", s:"10×30s · 5×1m · 3×5m · 2×10m · 1×15m", seg:[[30,10],[60,5],[300,3],[600,2],[900,1]]},
-  {id:"study",   t:"Study", s:"3 × 20 min", seg:[[1200,3]]},
-  {id:"free",    t:"Free", s:"your choice", seg:null},
+  {id:"gesture", t:"Gesture sprint", s:"20 × 30 s", h:"Line of action only.", seg:[[30,20]]},
+  {id:"buildup", t:"Build-up · 30 min", s:"8×30s · 4×1m · 2×3m · 1×10m", h:"From gesture to a short study.", seg:[[30,8],[60,4],[180,2],[600,1]]},
+  {id:"class",   t:"Class · 1 hour", s:"10×30s · 5×1m · 3×5m · 2×10m · 1×15m", h:"A full life-drawing class.", seg:[[30,10],[60,5],[300,3],[600,2],[900,1]]},
+  {id:"thumbs",  t:"Thumbnails", s:"12 × 2 min", h:"Small value sketches: masses and composition.", seg:[[120,12]]},
+  {id:"study",   t:"Long study", s:"3 × 20 min", h:"Structure, then value.", seg:[[1200,3]]},
+  {id:"copy",    t:"Master copy", s:"1 × 45 min", h:"One work, copied as faithfully as you can.", seg:[[2700,1]]},
+  {id:"free",    t:"Free", s:"your choice", h:"", seg:null},
 ];
-let planId = "buildup";
+let planId = PLANS.some(p => p.id === prefs.plan) ? prefs.plan : "buildup";
 const fmt = s => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return h ? `${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}` : `${m}:${String(x).padStart(2,"0")}`; };
 const fmtL = s => s < 60 ? `${s} s` : s % 60 ? `${Math.floor(s/60)}m${s%60}s` : `${s/60} min`;
 const segments = () => planId === "free" ? [[+$("freeDur").value, +$("freeCount").value]] : PLANS.find(p => p.id === planId).seg;
 
+function savePrefs(){
+  store.set("sk2:prefs", {selected:[...selected].filter(k => !k.startsWith("folder:")), plan:planId, level:$("level").value,
+    gray:$("optGray").checked, brk:$("optBreak").checked, sound:$("optSound").checked});
+}
 function renderPlans(){
   $("plans").innerHTML = "";
   for (const p of PLANS){
     const b = document.createElement("button"); b.className = "plan"; b.dataset.plan = p.id; b.setAttribute("aria-pressed", p.id === planId);
     const lad = p.seg ? p.seg.map(([d,n]) => Array.from({length:Math.min(n,8)}, () => `<i style="height:${Math.max(4,Math.min(22,Math.log2(d/15)*5))}px"></i>`).join("")).join("")
                       : `<i style="height:10px;opacity:.35"></i>`.repeat(3);
-    b.innerHTML = `<span class="t">${p.t}</span><span class="s">${p.s}</span><span class="ladder">${lad}</span>`;
-    b.onclick = () => { planId = p.id; renderPlans(); $("free").classList.toggle("on", p.id === "free"); updateSum(); };
+    b.innerHTML = `<span class="t">${p.t}</span><span class="s">${p.s}</span>${p.h ? `<span class="h">${p.h}</span>` : ""}<span class="ladder">${lad}</span>`;
+    b.onclick = () => { planId = p.id; renderPlans(); $("free").classList.toggle("on", p.id === "free"); updateSum(); savePrefs(); };
     $("plans").appendChild(b);
   }
+  $("free").classList.toggle("on", planId === "free");
 }
 
 /* ---------- Settings view ---------- */
 const status = (t, err) => { $("status").textContent = t; $("status").className = "status" + (err ? " err" : ""); };
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 function refresh(){ renderCats(); renderSets(); updateSum(); }
 function renderCats(){
-  const by = new Map(), get = k => by.get(k) || by.set(k, {cat:CATS.get(k), n:0, lo:3, hi:1, sets:0, busy:0, failed:0}).get(k);
-  for (const st of sets){ const e = get(st.set.cat); e.sets++; if (busy(st)) e.busy++; if (st.status === "error") e.failed++; }
+  const by = new Map(), get = k => by.get(k) || by.set(k, {cat:CATS.get(k), n:0, lo:3, hi:1, sets:0, loaded:0, busy:0, failed:0}).get(k);
+  for (const st of sets){ const e = get(st.set.cat); e.sets++; if (st.status !== "idle") e.loaded++; if (busy(st)) e.busy++; if (st.status === "error") e.failed++; }
   for (const it of pool()){ const e = get(it.ck); e.n++; e.lo = Math.min(e.lo, it.d); e.hi = Math.max(e.hi, it.d); }
   const el = $("cats"); el.innerHTML = "";
-  for (const [k, e] of [...by].sort((a, b) => a[1].cat.d - b[1].cat.d || a[1].cat.name.localeCompare(b[1].cat.name))){
-    const lab = document.createElement("label"); lab.className = "cat"; lab.dataset.cat = k;
-    const dots = e.n ? "●".repeat(e.hi) + "○".repeat(3 - e.hi) : "";
-    const lvl = e.n ? `level ${e.lo === e.hi ? e.lo : e.lo + "–" + e.hi}` : "";
-    const extra = [e.sets ? plural(e.sets, "set") : "own folder", e.busy ? "loading…" : "", e.failed ? `${e.failed} failed` : ""].filter(Boolean).join(" · ");
-    lab.innerHTML = `<input type="checkbox" ${selected.has(k) ? "checked" : ""}><span><span class="n">${esc(e.cat.name)}</span><br><span class="m">${plural(e.n, "image")}${lvl ? " · " + lvl : ""} <span class="dots">${dots}</span><br>${esc(extra)}</span></span>`;
-    lab.querySelector("input").onchange = ev => { ev.target.checked ? selected.add(k) : selected.delete(k); updateSum(); };
-    el.appendChild(lab);
+  for (const [gname, gsub] of CONFIG.groups){
+    const entries = [...by].filter(([, e]) => e.cat.group === gname);
+    if (!entries.length) continue;
+    const g = document.createElement("div"); g.className = "group";
+    g.innerHTML = `<h3>${esc(gname)} <span>${esc(gsub)}</span></h3><div class="cats"></div>`;
+    for (const [k, e] of entries){
+      const lab = document.createElement("label"); lab.className = "cat"; lab.dataset.cat = k;
+      const dots = e.n ? "●".repeat(e.hi) + "○".repeat(3 - e.hi) : "";
+      const count = e.n ? `${plural(e.n, "image")} · level ${e.lo === e.hi ? e.lo : e.lo + "–" + e.hi} <span class="dots">${dots}</span>`
+                        : e.sets && !e.loaded ? "not loaded yet" : e.busy ? "" : "0 images";
+      const extra = [e.sets ? plural(e.sets, "set") : "own folder", e.busy ? "loading…" : "", e.failed ? `${e.failed} failed` : ""].filter(Boolean).join(" · ");
+      lab.innerHTML = `<input type="checkbox" ${selected.has(k) ? "checked" : ""}><span><span class="n">${esc(e.cat.name)}</span><span class="about">${esc(e.cat.about || "")}</span><span class="m">${count}<br>${esc(extra)}</span></span>`;
+      lab.querySelector("input").onchange = ev => {
+        ev.target.checked ? selected.add(k) : selected.delete(k);
+        if (ev.target.checked) loadCategory(k);
+        updateSum(); savePrefs();
+      };
+      g.querySelector(".cats").appendChild(lab);
+    }
+    el.appendChild(g);
   }
 }
 function updateSum(){
   const segs = segments(), total = segs.reduce((a,[d,n]) => a + d*n, 0), poses = segs.reduce((a,[,n]) => a + n, 0);
-  const avail = sessionPool().length, loading = sets.some(busy);
-  $("sum").textContent = `${poses} poses · ${fmt(total)}` + (avail ? ` · ${plural(avail, "image")} in the pot` : loading ? " · loading sources…" : "");
-  // Start as soon as there is enough to fill the session, or everything has arrived.
+  const avail = sessionPool().length, loading = sets.some(st => busy(st) && selected.has(st.set.cat));
+  $("sum").textContent = `${plural(poses, "pose")} · ${fmt(total)}` + (avail ? ` · ${plural(avail, "image")} in the pot` : loading ? " · loading sources…" : selected.size ? "" : " · tick a category");
+  // Start as soon as there is enough to fill the session, or everything selected has arrived.
   $("startBtn").disabled = !(avail >= poses || (avail > 0 && !loading));
 }
 
@@ -441,7 +589,7 @@ function fromFiles(files){
     const parts = (f.webkitRelativePath || f.name).split("/");
     const folder = parts.length > 2 ? parts[1] : (parts.length === 2 ? parts[0] : "Single images");
     const cat = catForFolder(folder);
-    items.push({id:"l" + Math.random().toString(36).slice(2), title: f.name.replace(/\.[a-z0-9]+$/i, ""), maker:"own folder", year:"", link:"", source:"",
+    items.push({id:"l" + Math.random().toString(36).slice(2), title: f.name.replace(/\.[a-z0-9]+$/i, ""), maker:"own folder", year:"", link:"", source:"", licence:"",
                 ck: cat.key, d: levelOf(parts.join("/")) || cat.d, grp: folder, src:"local", file: f});
     selected.add(cat.key);
   }
@@ -455,29 +603,33 @@ const srcOf = it => it.src === "local" ? (it.url = it.url || URL.createObjectURL
 
 /* ---------- Review: 20 per set, reject per image, copy the verdict ---------- */
 let revSet = null;
+const revEl = $("rev");   // moves under the open set row; kept as a reference because re-rendering detaches it
 function renderSets(){
   const el = $("sets"); el.innerHTML = "";
+  let lastCat = null;
   sets.forEach((st, i) => {
+    if (st.set.cat !== lastCat){ lastCat = st.set.cat; const h = document.createElement("h4"); h.textContent = CATS.get(lastCat).name; el.appendChild(h); }
     const row = document.createElement("div"); row.className = "set";
     const n = st.items.filter(x => !rejected.has(x.id)).length;
-    const state = {waiting:"waiting", loading:"loading…", ok:plural(n, "image"), empty:"0 images: this search set returns nothing", error:`failed: ${st.err}`}[st.status];
+    const state = {idle:"not loaded", loading:"loading…", ok:plural(n, "image"), empty:"0 images: this search set returns nothing", error:`failed: ${st.err}`}[st.status];
     row.innerHTML = `<div><b>${esc(st.set.name)}</b> <span class="status${st.status === "error" || st.status === "empty" ? " err" : ""}">${esc(state)}</span><div class="q">${esc(st.set.source)} · ${esc(st.set.query)} · n${st.set.level}</div></div>`;
     const b = document.createElement("button"); b.className = "btn small"; b.textContent = revSet === i ? "Hide" : "Show 20"; b.dataset.set = i;
     b.disabled = !st.items.length; b.onclick = () => { revSet = revSet === i ? null : i; if (revSet !== null && !st.sample) st.sample = shuffle(st.items.slice()).slice(0, 20); renderSets(); renderReview(); };
     row.appendChild(b); el.appendChild(row);
+    if (revSet === i) el.appendChild(revEl);
   });
 }
 function renderReview(){
-  const el = $("rev"); el.innerHTML = "";
+  const el = revEl; el.innerHTML = "";
   if (revSet === null) return;
   for (const it of sets[revSet].sample || []){
     const fig = document.createElement("figure"); fig.classList.toggle("nee", rejected.has(it.id));
     fig.innerHTML = `<button type="button" title="Tap to reject or restore"><img loading="lazy" alt="" src="${esc(it.url)}"></button>
-      <figcaption>${esc(it.title)}<span>${esc([it.maker, it.year].filter(Boolean).join(" · "))}</span><a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">${esc(it.source)} ↗</a></figcaption>`;
+      <figcaption>${esc(it.title)}<span>${esc([it.maker, it.year, it.licence].filter(Boolean).join(" · "))}</span><a href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">${esc(it.source)} ↗</a></figcaption>`;
     fig.querySelector("img").onerror = () => fig.classList.add("broken");
     fig.querySelector("button").onclick = () => {
       rejected.has(it.id) ? rejected.delete(it.id) : rejected.add(it.id);
-      store.set("sk1:rejected", [...rejected]); fig.classList.toggle("nee", rejected.has(it.id)); renderCats(); updateSum();
+      store.set("sk2:rejected", [...rejected]); fig.classList.toggle("nee", rejected.has(it.id)); renderCats(); updateSum();
     };
     el.appendChild(fig);
   }
@@ -486,14 +638,16 @@ $("copyVerdict").onclick = async () => {
   const lines = [`Schetsklok · verdict ${new Date().toISOString().slice(0, 10)}`];
   for (const st of sets){
     const seen = st.sample || [], no = seen.filter(x => rejected.has(x.id));
-    lines.push(`\n${st.set.name} (${st.set.source}: ${st.set.query}): ${st.items.length} found, ` + (seen.length ? `${seen.length} reviewed, ${no.length} rejected` : "not reviewed"));
+    const found = {idle:"not loaded", loading:"loading", error:`failed (${st.err})`, empty:"0 found"}[st.status] || `${st.items.length} found`;
+    lines.push(`\n${st.set.name} (${st.set.source}: ${st.set.query}): ${found}, ` + (seen.length ? `${seen.length} reviewed, ${no.length} rejected` : "not reviewed"));
     for (const x of no) lines.push(`  ✕ ${x.title} — ${x.maker || "?"} · ${x.link}`);
   }
   const text = lines.join("\n");
   try { await navigator.clipboard.writeText(text); $("keurStatus").textContent = "Verdict copied."; $("verdictOut").hidden = true; }
   catch { $("verdictOut").value = text; $("verdictOut").hidden = false; $("verdictOut").select(); $("keurStatus").textContent = "Copying failed; select the text below."; }
 };
-$("refetch").onclick = () => { for (const st of sets) st.sample = null; revSet = null; renderReview(); loadAll(true); };
+$("loadAllBtn").onclick = () => Promise.all(sets.map(st => loadSet(st)));
+$("refetch").onclick = () => { for (const st of sets) st.sample = null; revSet = null; renderReview(); Promise.all(sets.filter(st => st.status !== "idle").map(st => loadSet(st, true))); };
 
 /* ---------- Building a session ----------
    Each pose duration gets a target level: the shortest duration in the plan gets the lowest level in the pot,
@@ -566,7 +720,7 @@ function setMeta(s, i){
   const segs = segments(), seg = segs[s.seg], segIdx = S.slots.filter((x, k) => k <= i && x.seg === s.seg).length, it = s.it;
   $("mA").textContent = it.title + (it.maker || it.year ? " — " + [it.maker, it.year].filter(Boolean).join(", ") : "");
   const b = $("mB"); b.textContent = "";
-  if (it.link){ const a = document.createElement("a"); a.href = it.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = it.source + " ↗"; b.append(a, " · "); }
+  if (it.link){ const a = document.createElement("a"); a.href = it.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = it.source + " ↗"; b.append(a, ` · ${it.licence || "Public domain"} · `); }
   b.append(`pose ${i+1}/${S.slots.length} · block ${s.seg+1}: ${segIdx}/${seg[1]} × ${fmtL(s.dur)} · ${CATS.get(it.ck).name} n${it.d}`);
 }
 async function show(i){
@@ -598,7 +752,7 @@ function next(){
 function prev(){ if (!S || S.over) return; if (S.pendingBreak != null) return show(S.i); if (S.i > 0) show(S.i - 1); }
 function finish(){
   const mins = Math.round((Date.now() - S.t0) / 60000);
-  $("finT").textContent = `${S.history.length} poses in ${mins} min`;
+  $("finT").textContent = `${plural(S.history.length, "pose")} in ${mins} min`;
   const th = $("thumbs"); th.innerHTML = "";
   for (const it of S.history.slice(-24)){ const m = new Image(); m.src = srcOf(it); m.alt = ""; th.appendChild(m); }
   $("fin").hidden = false; S.ready = false; S.over = true;
@@ -647,7 +801,8 @@ $("bNext").onclick = () => next(); $("bPrev").onclick = prev; $("bPause").onclic
 $("bGray").onclick = () => flipT("bGray"); $("bFlip").onclick = () => flipT("bFlip"); $("bGrid").onclick = () => flipT("bGrid");
 $("brkGo").onclick = () => S && S.pendingBreak != null && show(S.pendingBreak);
 $("again").onclick = start; $("back").onclick = stop;
-$("freeDur").onchange = updateSum; $("freeCount").onchange = updateSum;
+$("freeDur").onchange = () => updateSum(); $("freeCount").onchange = () => updateSum();
+for (const id of ["level", "optGray", "optBreak", "optSound"]) $(id).addEventListener("change", savePrefs);
 document.addEventListener("keydown", e => {
   if ($("stage").hidden) return;
   if (e.key === " "){ e.preventDefault(); togglePause(); }
@@ -657,10 +812,16 @@ document.addEventListener("keydown", e => {
 });
 document.addEventListener("visibilitychange", async () => { if (!document.hidden && S && !wake){ try { wake = await navigator.wakeLock?.request("screen"); } catch {} } });
 
-// For tests and the curious: read-only.
-window.schetsklok = {CONFIG, sets, pool, session: () => S};
+// Restore the viewer's last choices.
+if (prefs.level) $("level").value = prefs.level;
+if (prefs.gray != null) $("optGray").checked = prefs.gray;
+if (prefs.brk != null) $("optBreak").checked = prefs.brk;
+if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
-renderPlans(); refresh(); loadAll(false);
+// For tests and the curious: read-only.
+window.schetsklok = {CONFIG, sets, pool, session: () => S, catForFolder: f => catForFolder(f).key};
+
+renderPlans(); refresh(); loadSelected();
 })();
 </script>
 </body>
