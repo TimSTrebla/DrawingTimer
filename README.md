@@ -4,17 +4,18 @@
 
 Timed drawing from the masters, set up like an academy course. Short poses get sketches and studies, long ones the
 finished work. One static file, `index.html`: no build step, no backend, no API keys. Starting a session goes full
-screen; the screen stays awake.
+screen and the screen stays awake. Every image is scaled to fill the stage; pinch, drag, double-tap or scroll to
+zoom into it, and the zoom resets with the next image.
 
 | Group | Categories |
 |---|---|
-| Foundations | Bargue & casts · Anatomy (Albinus, Vesalius, Leonardo) · Hands & feet · Heads · Drapery |
+| Foundations | Bargue & casts · Anatomy (Albinus plates, Leonardo, écorchés) · Hands & feet · Heads · Drapery |
 | Figure | Gesture & motion (Muybridge) · Figure studies (chalk, sanguine) · Life drawing |
 | Sketch to finish | Studies & sketches · Oil sketches · Great scenes · Famous paintings · Rijksmuseum |
 | Media | Engraving & etching (Doré, Dürer, Rembrandt, Goya) · Japanese woodblock · Pastel · Oil: head & figure · Sculpture |
 | Modern | Colour & light · Impressionism · Expressionism (incl. Schiele) · Abstraction (Kandinsky, af Klint) |
 
-Most of the course is ticked on a first visit (not landscapes, nor the categories only your own folder fills).
+Nothing is ticked on a first visit: you choose, and the device remembers it.
 Sessions: Gesture · Build-up · Class · Sketch to finish · Thumbnails · Long study · Master copy · Free.
 Keys: space pause · ← → previous/next · G greyscale · F mirror · R grid · Esc stop. Choices are remembered on the device.
 
@@ -60,5 +61,5 @@ uploaded.
 ## Test
 `node test/schetsklok.test.mjs` (needs Playwright). Runs against mocked APIs: defaults, filters and licences, lazy
 loading, the soft style filter, complexity scores, folder keywords, full screen, remembered choices, and a full
-"Build-up" without an empty image, even when 30% of images fail to load (`BROKEN=0.6` for the stress run). The real
+"Build-up" without an empty image, with pinch, drag and double-tap zoom, even when 30% of images fail to load (`BROKEN=0.6` for the stress run). The real
 APIs are deliberately not used in the test; the quality of their results is reviewed by hand.

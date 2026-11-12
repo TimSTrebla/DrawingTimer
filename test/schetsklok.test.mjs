@@ -136,7 +136,7 @@ const page = await ctx.newPage();
 const errors = [], expected404 = [], unknown = [];
 page.on("console", m => { if (m.type() === "error") (/404/.test(m.text()) ? expected404 : errors).push(m.text()); });
 page.on("pageerror", e => errors.push("pageerror: " + e.message));
-let imgOk = 0, imgBad = 0;
+let imgOk = 0, imgBad = 0; const badUrls = new Set();   // one broken image may be asked for at two sizes
 const json = (route, body) => route.fulfill({ contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 await page.route("**/*", route => {
   const u = route.request().url();
@@ -147,7 +147,7 @@ await page.route("**/*", route => {
   if (u.startsWith("https://api.artic.edu/api/v1/artworks/search")) return json(route, aic(u));
   if (u.startsWith("https://openaccess-api.clevelandart.org/api/artworks/")) return json(route, cma(u));
   if (/^https:\/\/(upload\.wikimedia\.org|commons\.wikimedia\.org\/wiki\/Special:FilePath|www\.artic\.edu\/iiif|openaccess-cdn\.clevelandart\.org)\//.test(u)) {
-    if (/BROKEN_|\/bad-/.test(u)) { imgBad++; return route.fulfill({ status: 404, body: "" }); }
+    if (/BROKEN_|\/bad-/.test(u)) { badUrls.add(u.replace(/\/full\/\d+,\//, "/full/W,/")); imgBad = badUrls.size; return route.fulfill({ status: 404, body: "" }); }
     imgOk++; return route.fulfill({ contentType: "image/jpeg", body: PICS[hash(u) % 3] });
   }
   unknown.push(u); return route.abort();
@@ -159,11 +159,15 @@ const pressed = () => page.$$eval(".chip[data-cat]", els => els.filter(e => e.ge
 await page.clock.install({ time: new Date("2026-11-12T10:00:00") });
 await page.goto("http://localhost:8123/");
 
-console.log("\n1 · First visit: most of the course is ticked and loads");
+console.log("\n1 · First visit: nothing ticked, nothing loaded; ticking loads");
 const catKeys = await page.evaluate(() => Object.keys(window.schetsklok.CONFIG.categories));
 let on = await pressed();
-check(on.length === catKeys.length - 3 && !on.includes("colour") && !on.includes("ai") && !on.includes("watercolour"), `${on.length} of ${catKeys.length} categories ticked by default; not landscapes, watercolour, AI`);
-check(on.includes("nude") && on.includes("rijks") && on.includes("famous"), "life drawing, Rijksmuseum and famous paintings are on");
+check(on.length === 0, `no category ticked on a first visit (${on.length})`);
+check(await page.isDisabled("#startBtn") && /tick what to draw/.test(await page.$eval("#sum", e => e.textContent)), "start disabled, with a hint to tick something");
+check(await page.evaluate(() => window.schetsklok.sets.every(s => s.status === "idle")), "no set loaded before anything is ticked");
+for (const k of catKeys) if (!["colour", "watercolour", "ai"].includes(k)) await page.click(`.chip[data-cat="${k}"]`);
+on = await pressed();
+check(on.length === catKeys.length - 3, `${on.length} categories ticked for the review`);
 await settled(on);
 const info = await setsOf(on);
 for (const s of info) check(s.status === "ok" && s.n > 0, `${s.name} (${s.source}): ${s.status}, ${s.n} images`);
@@ -194,7 +198,9 @@ check(calls.cma.some(c => /^pastel\|Drawing$/.test(c)), "Cleveland type filter s
 const wd = info.filter(s => s.source === "wikidata");
 check(wd.length === 2 && wd.every(s => s.n === 48), `Wikidata: duplicates and TIFFs and label-less items dropped (${wd.map(s => s.n).join(", ")} of 60)`);
 const rijksItems = wd.find(s => s.cat === "rijks").items;
-check(rijksItems.every(x => x.source === "Rijksmuseum · via Wikimedia" && /Special:FilePath\/.*width=1280/.test(x.url) && /commons\.wikimedia\.org\/wiki\/File:/.test(x.link)), "Rijksmuseum items: source label, 1280-wide Commons image, link to the file page");
+check(rijksItems.every(x => x.source === "Rijksmuseum · via Wikimedia" && /Special:FilePath\/.*width=1920/.test(x.url) && /commons\.wikimedia\.org\/wiki\/File:/.test(x.link)), "Rijksmuseum items: source label, 1920-wide Commons image, link to the file page");
+check(all.filter(x => x.source === "Art Institute of Chicago").every(x => /\/full\/1686,\//.test(x.url)), "AIC images asked for at 1686 px");
+check(!info.filter(s => s.cat === "anatomy").some(s => /Vesalius/.test(s.name)), "Vesalius book scans are gone from Anatomy");
 const nw = rijksItems.find(x => x.title === "The Night Watch");
 check(nw && nw.d === 3, `famous crowded scene scores 3 (Night Watch: ${nw && nw.d})`);
 const cx = await page.evaluate(() => { const c = window.schetsklok.complexity; return [c(2, "Study for a figure", "black chalk"), c(2, "Portrait of a man", "oil on canvas"), c(1, "Battle of Anghiari", "pen and ink"), c(3, "Plate 9", "")]; });
@@ -211,7 +217,7 @@ const folders = await page.evaluate(() => ["Schetsen", "Gravures", "Handen n1", 
 check(folders.join() === "drawing,engraving,hands,ai,pastel,engraving,anatomy,drawing,sculpture,rijks,studies", `own folders land in the right category: ${folders.join(", ")}`);
 
 console.log("\n3 · Build-up with Engraving + Drawing only, full screen");
-for (const k of on) if (k !== "drawing" && k !== "engraving") await page.click(`.chip[data-cat="${k}"]`);
+for (const k of on) if (k !== "drawing" && k !== "engraving") await page.click(`.chip[data-cat="${k}"]`);   // untick the rest
 on = await pressed();
 check(on.sort().join() === "drawing,engraving", `only Engraving and Drawing ticked (${on.join(", ")})`);
 await page.click('[data-plan="buildup"]');
@@ -219,6 +225,24 @@ check(await page.isEnabled("#startBtn"), "start button enabled");
 await page.click("#startBtn");
 await page.waitForFunction(() => window.schetsklok.session()?.ready);
 check(await page.evaluate(() => !!document.fullscreenElement), "session runs in full screen");
+const fit = await page.evaluate(() => { const v = document.getElementById("view"), p = document.getElementById("pic"), cs = getComputedStyle(v);
+  const vw = v.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), vh = v.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  return { pw: p.offsetWidth, ph: p.offsetHeight, vw, vh, nat: document.getElementById("img").naturalWidth }; });
+check((Math.abs(fit.pw - fit.vw) <= 1 || Math.abs(fit.ph - fit.vh) <= 1) && fit.pw > fit.nat, `image scaled up to fill the stage (${fit.pw}×${fit.ph} in ${fit.vw}×${fit.vh}, natural ${fit.nat} wide)`);
+const gesture = (seq) => page.evaluate(seq => { const v = document.getElementById("view"), r = v.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (const [type, id, dx, dy] of seq) v.dispatchEvent(new PointerEvent(type, { pointerId: id, clientX: cx + dx, clientY: cy + dy, bubbles: true, isPrimary: id === 1, pointerType: "touch" }));
+  return window.schetsklok.zoom(); }, seq);
+let z = await gesture([["pointerdown", 1, -50, 0], ["pointerdown", 2, 50, 0], ["pointermove", 1, -150, 0], ["pointermove", 2, 150, 0], ["pointerup", 1, -150, 0], ["pointerup", 2, 150, 0]]);
+check(Math.abs(z.z - 3) < 0.01, `pinch: fingers 100 → 300 px apart zooms 3× (${z.z})`);
+z = await gesture([["pointerdown", 1, 0, 0], ["pointermove", 1, -80, -40], ["pointerup", 1, -80, -40]]);
+check(z.tx === -80 && z.ty === -40, `drag pans the zoomed image (${z.tx}, ${z.ty})`);
+await page.click("#bNext"); await page.waitForFunction(() => window.schetsklok.session()?.ready && window.schetsklok.session().i === 1);
+z = await page.evaluate(() => window.schetsklok.zoom());
+check(z.z === 1 && z.tx === 0 && z.ty === 0, "next image resets the zoom");
+z = await gesture([["pointerdown", 1, 100, 50], ["pointerup", 1, 100, 50], ["pointerdown", 1, 100, 50], ["pointerup", 1, 100, 50]]);
+check(z.z === 2.5, `double-tap zooms 2.5× (${z.z})`);
+z = await gesture([["pointerdown", 1, 0, 0], ["pointerup", 1, 0, 0], ["pointerdown", 1, 0, 0], ["pointerup", 1, 0, 0]]);
+check(z.z === 1, "double-tap again fits the image");
 const badBefore = imgBad;
 let shot = false, breaks = 0, overlayWhileReady = 0;
 for (let k = 0; k < 4000; k++) {

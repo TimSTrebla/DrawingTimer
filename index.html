@@ -81,11 +81,13 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
 
 /* Stage */
 #stage{position:fixed;inset:0;background:var(--graphite);display:grid;grid-template-rows:1fr auto;z-index:20}
-.view{position:relative;overflow:hidden;display:grid;place-items:center;min-height:0;padding:calc(8px + env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) 8px max(8px,env(safe-area-inset-left,0px))}
-.view img{max-width:100%;max-height:100%;object-fit:contain;transition:filter .2s}
+.view{position:relative;overflow:hidden;display:grid;place-items:center;min-height:0;touch-action:none;padding:calc(8px + env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) 8px max(8px,env(safe-area-inset-left,0px))}
+.view.zoomed{cursor:grab}
+.pic{position:relative;transform-origin:center center;will-change:transform}
+.pic img{display:block;width:100%;height:100%;transition:filter .2s}
 .view img.gray{filter:grayscale(1) contrast(1.05)}
 .view img.flip{transform:scaleX(-1)}
-.grid{position:absolute;pointer-events:none;background-image:linear-gradient(var(--paper) 1px,transparent 1px),linear-gradient(90deg,var(--paper) 1px,transparent 1px);opacity:.22}
+.grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(var(--paper) 1px,transparent 1px),linear-gradient(90deg,var(--paper) 1px,transparent 1px);opacity:.22}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--f-mono);background:var(--graphite)}
 .break{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:var(--graphite);padding:16px}
 .break h2{font-size:2.4rem;margin:0}
@@ -159,15 +161,14 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
     </details>
     <details>
       <summary>About</summary>
-      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Only the sets of chosen categories are loaded; results are kept on this device for three days. Each image gets a complexity score (1–3) from its set, medium and title; the shortest poses get the simplest images. Keys: space pause · ← → · G greyscale · F mirror · R grid · Esc stop.</p>
+      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Only the sets of chosen categories are loaded; results are kept on this device for three days. Each image gets a complexity score (1–3) from its set, medium and title; the shortest poses get the simplest images. Pinch, double-tap or scroll to zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Esc stop.</p>
     </details>
   </div>
 </div>
 
 <div id="stage" hidden>
   <div class="view" id="view">
-    <img id="img" alt="">
-    <div class="grid" id="grid" hidden></div>
+    <div class="pic" id="pic"><img id="img" alt=""><div class="grid" id="grid" hidden></div></div>
     <div class="loading" id="loading" hidden>loading image…</div>
     <div class="break" id="brk" hidden><div><div class="lbl">Next block</div><h2 id="brkT"></h2><p class="note" id="brkS"></p><button class="btn primary" id="brkGo">Continue</button></div></div>
     <div class="break" id="fin" hidden><div class="done"><div class="lbl">Done</div><h2 id="finT"></h2><div class="thumbs" id="thumbs"></div><div class="row"><button class="btn primary" id="again">Another session</button><button class="btn" id="back">Back</button></div></div></div>
@@ -234,7 +235,7 @@ const CONFIG = {
   groups: ["Foundations", "Figure", "Sketch to finish", "Media", "Modern", "Your own"],
   categories: {
     bargue:       {group:"Foundations", name:"Bargue & casts", level:1, about:"Contour, proportion and value: the academy's first year.", keywords:["bargue","cast","gips"]},
-    anatomy:      {group:"Foundations", name:"Anatomy", level:2, about:"Skeleton and muscle under the skin: Albinus, Vesalius, Leonardo.", keywords:["anatom","skelet","ecorche","écorché","spier","muscle"]},
+    anatomy:      {group:"Foundations", name:"Anatomy", level:2, about:"Skeleton and muscle under the skin: Albinus plates, Leonardo, écorchés.", keywords:["anatom","skelet","ecorche","écorché","spier","muscle"]},
     hands:        {group:"Foundations", name:"Hands & feet", level:1, about:"The hardest small forms, as the masters studied them.", keywords:["hand","feet","foot","voet"]},
     heads:        {group:"Foundations", name:"Heads", level:1, about:"Head studies: planes, features, expression.", keywords:["head","hoofd","face","gezicht","portret","portrait"]},
     drapery:      {group:"Foundations", name:"Drapery", level:2, about:"Folds as form: how cloth follows the body.", keywords:["draper","plooi","fold"]},
@@ -258,15 +259,15 @@ const CONFIG = {
     abstraction:  {group:"Modern", name:"Abstraction", level:2, about:"Kandinsky, af Klint: composition and colour without a subject.", keywords:["abstract"]},
     ai:           {group:"Your own", name:"AI images", level:2, about:"Your own generations.", keywords:["ai","midjourney","flux","generat","sd"]},
   },
-  // Ticked on first visit: most of the course. Not: landscapes, and the categories that only your own folder fills.
-  defaultsOff: ["colour", "watercolour", "ai"],
+  defaults: [],   // ticked on a first visit; afterwards the device remembers your choice
   sets: [
     // Foundations
     {cat:"bargue",  name:"Bargue drawing course I",      source:"commons", query:"Category:Bargue-Gérôme Drawing Course I", level:1},
-    {cat:"anatomy", name:"Albinus · skeleton & muscle",  source:"commons", query:"Category:Tabulae sceleti et musculorum corporis humani", level:2},
-    {cat:"anatomy", name:"Vesalius · Fabrica 1543",      source:"commons", query:"Category:De humani corporis fabrica 1543", level:2},
+    {cat:"anatomy", name:"Albinus · plates",             source:"commons", query:"Category:Tabulae sceleti et musculorum corporis humani", level:2, exclude:"folio|\\bpage|text|titel"},   // the plates, not the book scans
     {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:20},
     {cat:"anatomy", name:"Anatomical studies (AIC)",     source:"aic",     query:"anatomical study", type:"drawing|print", level:2},
+    {cat:"anatomy", name:"Écorchés (AIC)",               source:"aic",     query:"ecorche", type:"drawing|print|sculpture", level:2},
+    {cat:"anatomy", name:"Anatomical studies (Cleveland)",source:"cma",    query:"anatomical", type:"Drawing", level:2},
     {cat:"hands",   name:"Drawings of hands",            source:"commons", query:"Category:Drawings of hands", level:1, calls:20},
     {cat:"hands",   name:"Hand studies (AIC)",           source:"aic",     query:"study of hands", type:"drawing", level:1},
     {cat:"hands",   name:"Hand studies (Cleveland)",     source:"cma",     query:"hands", type:"Drawing", level:1},
@@ -329,7 +330,8 @@ const CONFIG = {
   commonsCalls: 12, // default max API calls per Commons set; each subcategory costs one
   aicPages: 2,      // × 100 search results
   cmaPages: 2,      // × 100 search results
-  width: 1280,      // image width on Commons (one of Wikimedia's standard sizes)
+  width: 1920,      // image width on Commons (one of Wikimedia's standard sizes)
+  aicWidth: 1686,   // IIIF width at the Art Institute; falls back to 843 when a size is refused
   cacheHours: 72,   // keep search results on this device
 };
 
@@ -472,7 +474,7 @@ async function loadAIC(set){
       if (type && !type.test(`${a.artwork_type_title || ""} ${a.classification_title || ""}`)) continue;
       if (medium && !medium.test(`${a.medium_display || ""} ${a.classification_title || ""}`)) continue;
       if (exclude && exclude.test(a.title || "")) continue;
-      const it = {id:"a" + a.id, url:`${iiif}/${encodeURIComponent(a.image_id)}/full/843,/0/default.jpg`, title: clip(a.title || "Untitled", 140),
+      const it = {id:"a" + a.id, url:`${iiif}/${encodeURIComponent(a.image_id)}/full/${CONFIG.aicWidth},/0/default.jpg`, title: clip(a.title || "Untitled", 140),
         maker: clip(a.artist_title || String(a.artist_display || "").split("\n")[0], 80), year: clip(a.date_display, 40), medium: String(a.medium_display || ""),
         link:`https://www.artic.edu/artworks/${encodeURIComponent(a.id)}`, source:"Art Institute of Chicago", licence:"Public domain"};
       loose.push(it);
@@ -517,7 +519,7 @@ const sets = CONFIG.sets.map(set => ({set, status:"idle", items:[], err:""}));
 let local = [];                                    // your own images
 const prefs = store.get("sk3:prefs") || {};
 const rejected = new Set(store.get("sk3:rejected") || store.get("sk2:rejected") || store.get("sk1:rejected") || []);
-const selected = new Set((prefs.selected || [...CATS.keys()].filter(k => !CONFIG.defaultsOff.includes(k))).filter(k => CATS.has(k)));
+const selected = new Set((prefs.selected || CONFIG.defaults).filter(k => CATS.has(k)));
 const cacheKey = set => "sk3:set:" + JSON.stringify([set.source, set.query, set.type, set.medium, set.style, set.exclude, set.calls, CONFIG.licences, CONFIG.width, CONFIG.maxPerSet]);
 const busy = st => st.status === "loading";
 function applySet(st, raw, status){
@@ -607,7 +609,7 @@ function renderCats(){
 function updateSum(){
   const segs = segments(), total = segs.reduce((a,[d,n]) => a + d*n, 0), poses = segs.reduce((a,[,n]) => a + n, 0);
   const avail = sessionPool().length, loading = sets.some(st => busy(st) && selected.has(st.set.cat));
-  $("sum").textContent = `${plural(poses, "pose")} · ${fmt(total)}` + (avail ? ` · ${plural(avail, "image")}` : loading ? " · loading…" : selected.size ? "" : " · tick a category");
+  $("sum").textContent = `${plural(poses, "pose")} · ${fmt(total)}` + (avail ? ` · ${plural(avail, "image")}` : loading ? " · loading…" : selected.size ? "" : " · tick what to draw");
   // Start as soon as there is enough to fill the session, or everything ticked has arrived.
   $("startBtn").disabled = !(avail >= poses || (avail > 0 && !loading));
 }
@@ -708,13 +710,19 @@ function build(){
    of similar complexity. Only an image that is already loaded ever reaches the screen. */
 let S = null, wake = null, actx = null;
 const img = $("img");
+const loadOne = url => new Promise((res, rej) => {
+  const im = new Image(), t = setTimeout(() => { im.src = ""; rej(new Error("timeout")); }, 20000);
+  im.onload = () => { clearTimeout(t); im.naturalWidth > 1 ? res(im) : rej(new Error("empty image")); };
+  im.onerror = () => { clearTimeout(t); rej(new Error("load error")); };
+  im.src = url;
+});
+// A IIIF size the server refuses: try the size every server has.
+const altUrl = it => it.src === "web" && /\/full\/\d+,\/0\//.test(it.url) && !/\/full\/843,\//.test(it.url) ? it.url.replace(/\/full\/\d+,\//, "/full/843,/") : null;
 function loadImg(it){
-  if (!S.imgs.has(it.id)) S.imgs.set(it.id, new Promise((res, rej) => {
-    const im = new Image(), t = setTimeout(() => { im.src = ""; rej(new Error("timeout")); }, 20000);
-    im.onload = () => { clearTimeout(t); im.naturalWidth > 1 ? res(im) : rej(new Error("empty image")); };
-    im.onerror = () => { clearTimeout(t); rej(new Error("load error")); };
-    im.src = srcOf(it);
-  }).catch(e => { S && S.imgs.delete(it.id); throw e; }));
+  if (!S.imgs.has(it.id)) S.imgs.set(it.id, (async () => {
+    try { return await loadOne(srcOf(it)); }
+    catch (e){ const alt = altUrl(it); if (!alt) throw e; const im = await loadOne(alt); it.url = alt; return im; }
+  })().catch(e => { S && S.imgs.delete(it.id); throw e; }));
   return S.imgs.get(it.id);
 }
 function ensure(i){
@@ -762,8 +770,8 @@ async function show(i){
   if (!im) { s.ready = null; return show(i); }
   img.src = im.src; await img.decode().catch(() => {});
   if (sess !== S || S.i !== i) return;
-  setMeta(s, i); $("loading").hidden = true; $("loading").textContent = "loading image…";
-  S.ready = true; S.history.push(s.it); S.log.push({i, id:s.it.id, w: img.naturalWidth, h: img.naturalHeight}); placeGrid();
+  resetZoom(); fitPic(); setMeta(s, i); $("loading").hidden = true; $("loading").textContent = "loading image…";
+  S.ready = true; S.history.push(s.it); S.log.push({i, id:s.it.id, w: img.naturalWidth, h: img.naturalHeight, pw: Z.w, ph: Z.h});
 }
 function next(){
   if (!S || S.over) return;
@@ -814,15 +822,66 @@ function setToggle(id, on){
   $(id).setAttribute("aria-pressed", on);
   if (id === "bGray") img.classList.toggle("gray", on);
   if (id === "bFlip") img.classList.toggle("flip", on);
-  if (id === "bGrid"){ $("grid").hidden = !on; placeGrid(); }
+  if (id === "bGrid") $("grid").hidden = !on;
 }
 const flipT = id => setToggle(id, $(id).getAttribute("aria-pressed") !== "true");
-function placeGrid(){
-  const g = $("grid"); if (g.hidden || !img.naturalWidth) return;
-  const r = img.getBoundingClientRect(), v = $("view").getBoundingClientRect();
-  Object.assign(g.style, {left:(r.left - v.left) + "px", top:(r.top - v.top) + "px", width:r.width + "px", height:r.height + "px", backgroundSize:`${r.width/3}px ${r.height/3}px`});
+/* ---------- Fit and zoom: the image fills the stage; pinch, drag, double-tap and wheel zoom into it ---------- */
+const pic = $("pic"), view = $("view"), Z = {z:1, tx:0, ty:0, w:0, h:0};
+function fitPic(){
+  if (!img.naturalWidth) return;
+  const cs = getComputedStyle(view), vw = view.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), vh = view.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const s = Math.min(vw / img.naturalWidth, vh / img.naturalHeight);
+  Z.w = Math.round(img.naturalWidth * s); Z.h = Math.round(img.naturalHeight * s);
+  pic.style.width = Z.w + "px"; pic.style.height = Z.h + "px"; $("grid").style.backgroundSize = `${Z.w/3}px ${Z.h/3}px`;
+  applyZoom();
 }
-window.addEventListener("resize", placeGrid);
+function applyZoom(){
+  const maxX = Math.max(0, (Z.w * Z.z - view.clientWidth) / 2), maxY = Math.max(0, (Z.h * Z.z - view.clientHeight) / 2);
+  Z.tx = Math.min(maxX, Math.max(-maxX, Z.tx)); Z.ty = Math.min(maxY, Math.max(-maxY, Z.ty));
+  pic.style.transform = Z.z === 1 ? "" : `translate(${Z.tx}px, ${Z.ty}px) scale(${Z.z})`;
+  view.classList.toggle("zoomed", Z.z > 1);
+}
+function resetZoom(){ Z.z = 1; Z.tx = Z.ty = 0; applyZoom(); }
+function zoomAt(z, x, y){   // the picture point under (x, y) stays put; x, y relative to the stage centre
+  z = Math.min(8, Math.max(1, z));
+  const px = (x - Z.tx) / Z.z, py = (y - Z.ty) / Z.z;
+  Z.z = z; Z.tx = x - px * z; Z.ty = y - py * z; applyZoom();
+}
+const ptrs = new Map(); let gest = null, lastTap = 0;
+const rel = e => { const c = view.getBoundingClientRect(); return [e.clientX - c.left - c.width / 2, e.clientY - c.top - c.height / 2]; };
+const mid = p => [(p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2], dist = p => Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]);
+view.addEventListener("pointerdown", e => {
+  if (e.target.closest("button")) return;   // the break and finish buttons sit inside the stage
+  try { view.setPointerCapture(e.pointerId); } catch {}
+  ptrs.set(e.pointerId, rel(e)); const p = [...ptrs.values()];
+  gest = p.length >= 2 ? {kind:"pinch", d0: dist(p), z0: Z.z, m0: mid(p), tx0: Z.tx, ty0: Z.ty}
+                       : {kind:"drag", x0: p[0][0], y0: p[0][1], tx0: Z.tx, ty0: Z.ty, moved: false};
+});
+view.addEventListener("pointermove", e => {
+  if (!ptrs.has(e.pointerId) || !gest) return;
+  ptrs.set(e.pointerId, rel(e)); const p = [...ptrs.values()];
+  if (gest.kind === "pinch" && p.length >= 2){
+    const z = Math.min(8, Math.max(1, gest.z0 * dist(p) / gest.d0)), m = mid(p);
+    const px = (gest.m0[0] - gest.tx0) / gest.z0, py = (gest.m0[1] - gest.ty0) / gest.z0;   // picture point under the first midpoint…
+    Z.z = z; Z.tx = m[0] - px * z; Z.ty = m[1] - py * z; applyZoom();                        // …stays under the current one
+  } else if (gest.kind === "drag" && Z.z > 1){
+    const dx = p[0][0] - gest.x0, dy = p[0][1] - gest.y0; if (Math.hypot(dx, dy) > 4) gest.moved = true;
+    Z.tx = gest.tx0 + dx; Z.ty = gest.ty0 + dy; applyZoom();
+  }
+});
+const endPtr = e => {
+  if (!ptrs.has(e.pointerId)) return;
+  const [x, y] = ptrs.get(e.pointerId); ptrs.delete(e.pointerId);
+  if (gest && gest.kind === "drag" && !gest.moved && e.type === "pointerup"){   // a tap; two quick ones zoom
+    const now = performance.now();
+    if (now - lastTap < 320){ Z.z > 1 ? resetZoom() : zoomAt(2.5, x, y); lastTap = 0; } else lastTap = now;
+  }
+  const p = [...ptrs.values()];
+  gest = p.length ? {kind:"drag", x0: p[0][0], y0: p[0][1], tx0: Z.tx, ty0: Z.ty, moved: true} : null;
+};
+view.addEventListener("pointerup", endPtr); view.addEventListener("pointercancel", endPtr);
+view.addEventListener("wheel", e => { e.preventDefault(); const [x, y] = rel(e); zoomAt(Z.z * Math.exp(-e.deltaY * 0.002), x, y); }, {passive:false});
+window.addEventListener("resize", fitPic);
 function togglePause(){ if (!S) return; S.paused = !S.paused; $("bPause").textContent = S.paused ? "▶︎ go" : "❚❚"; }
 
 $("startBtn").onclick = start;
@@ -847,7 +906,7 @@ if (prefs.brk != null) $("optBreak").checked = prefs.brk;
 if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
 // For tests and the curious: read-only.
-window.schetsklok = {CONFIG, sets, pool, session: () => S, catForFolder: f => catForFolder(f).key, complexity};
+window.schetsklok = {CONFIG, sets, pool, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
 
 renderPlans(); refresh(); loadSelected();
 })();
