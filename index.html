@@ -37,7 +37,17 @@ header p{margin:2px 0 0;color:var(--muted)}
 .chip[aria-pressed=true]{border-color:var(--sanguine);color:var(--paper)}
 .chip small{font:.7rem var(--f-mono);color:var(--muted)}
 .chip small.err{color:var(--sanguine)}
-.plan-info{font:.8rem var(--f-mono);color:var(--muted);min-height:1.4em;margin-top:6px}
+/* Plans: cards, because the explanation is the point */
+.plans{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.plan{text-align:left;display:grid;gap:5px;align-content:start;padding:12px 14px;border:1px solid var(--line);border-radius:4px;background:transparent;cursor:pointer;color:var(--muted)}
+.plan:hover{border-color:var(--muted)}
+.plan[aria-pressed=true]{border-color:var(--sanguine);color:var(--paper);background:color-mix(in srgb,var(--sanguine) 8%,transparent)}
+.plan .t{font-weight:600;font-size:1.05rem;display:flex;justify-content:space-between;gap:8px;color:var(--paper)}
+.plan .t small{font:.75rem var(--f-mono);color:var(--muted)}
+.plan .h{font-size:.9rem;line-height:1.35}
+.plan .s{font:.74rem var(--f-mono);color:var(--muted)}
+.ladder{display:flex;gap:3px;align-items:flex-end;height:20px;margin-top:2px}
+.ladder i{display:block;width:6px;background:var(--sanguine);opacity:.7;border-radius:1px}
 .free{display:none;gap:8px;margin-top:8px}
 .free.on{display:flex;flex-wrap:wrap}
 select{background:var(--slate);border:1px solid var(--line);border-radius:4px;padding:8px 10px;min-height:40px}
@@ -114,23 +124,22 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
 <div class="wrap" id="setup">
   <header>
     <h1>Schetsklok</h1>
-    <p>Timed drawing from the masters. Short poses get sketches and studies, long ones the finished work.</p>
+    <p>Timed drawing from the masters. Tick what to draw, pick a session: short poses get plates and studies, long ones the finished work.</p>
   </header>
 
   <div class="groups" id="cats"></div>
 
   <div class="groups">
-    <div class="group"><span class="lbl">Session</span><div><div class="chips" id="plans"></div><div class="plan-info" id="planInfo"></div>
+    <div class="group"><span class="lbl">Session</span><div><div class="plans" id="plans"></div>
       <div class="free" id="free">
         <select id="freeDur" aria-label="Time per pose">
-          <option value="30">30 seconds</option><option value="45">45 seconds</option><option value="60" selected>1 minute</option>
-          <option value="120">2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="1200">20 minutes</option><option value="2700">45 minutes</option>
+          <option value="30">30 seconds</option><option value="45">45 seconds</option><option value="60">1 minute</option>
+          <option value="120" selected>2 minutes</option><option value="300">5 minutes</option><option value="600">10 minutes</option><option value="1200">20 minutes</option><option value="2700">45 minutes</option>
         </select>
         <select id="freeCount" aria-label="Number of poses">
           <option>1</option><option>3</option><option>5</option><option selected>10</option><option>20</option><option>40</option>
         </select>
       </div></div></div>
-    <div class="group"><span class="lbl">Shortest pose</span><div class="chips" id="paces"></div></div>
     <div class="group"><span class="lbl">Options</span><div class="opts">
       <label><input type="checkbox" id="optGray"> greyscale</label>
       <label><input type="checkbox" id="optBreak" checked> break between blocks</label>
@@ -162,7 +171,7 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
     </details>
     <details>
       <summary>About</summary>
-      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Only the sets of chosen categories are loaded; results are kept on this device for three days. Each image gets a complexity score (1–3) from its set, medium and title; the shortest poses get the simplest images. <b>Shortest pose</b> lifts every block shorter than it, so a class can start at two minutes instead of thirty seconds. Pinch, double-tap or scroll to zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Esc stop.</p>
+      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Each image gets a complexity score (1–3) from its set, medium and title; every session draws from its own range of that score, and within a session the shortest poses get the simplest images. A weekly snapshot of all sources (<span id="snapDate">none loaded</span>) makes the first visit quick; anything missing is fetched live and kept on this device for three days. Pinch, double-tap or scroll to zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Esc stop.</p>
     </details>
   </div>
 </div>
@@ -211,7 +220,10 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
        style   AIC: style; soft — ignored when fewer than 12 works match it
        exclude title words you do not want (all sources; Commons sets always drop blank pages, covers and the like)
    complexity: every image gets a score 1–3 = set level, nudged by title and medium (see `complexity` below).
-               The shortest poses in a plan get the lowest scores in the pot, the longest the highest.
+               Each session plan draws from its own range of scores (PLANS below); within a plan the shortest
+               poses get the lowest scores in the pot, the longest the highest.
+   snapshot:   tools/snapshot.mjs (run weekly by GitHub Actions) stores every set in sets.json, so a first visit
+               needs no API calls. Sets missing from it are fetched live and cached on the device.
    =================================================================================== */
 const NO_SCENERY = "landscape|view of|\\bview\\b|tree|river|harbou?r|city|street|church|architect|ornament|design for|\\bmap\\b|ship|boat|still life";
 const NO_FRONTMATTER = "\\bblank\\b|title ?page|frontispiece|\\bindex\\b|\\bbinding\\b|\\bcover\\b|\\binitials\\b|decorated initial|historiated initial|text page";   // always applied to Commons sets
@@ -265,11 +277,11 @@ const CONFIG = {
     // Foundations
     {cat:"bargue",  name:"Bargue drawing course I",      source:"commons", query:"Category:Bargue-Gérôme Drawing Course I", level:1},
     {cat:"anatomy", name:"Albinus · plates",             source:"commons", query:"Category:Tabulae sceleti et musculorum corporis humani", level:2, exclude:"folio|\\bpage|text|titel"},   // the plates, not the book scans
-    {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:20},
+    {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:12},
     {cat:"anatomy", name:"Anatomical studies (AIC)",     source:"aic",     query:"anatomical study", type:"drawing|print", level:2},
     {cat:"anatomy", name:"Écorchés (AIC)",               source:"aic",     query:"ecorche", type:"drawing|print|sculpture", level:2},
     {cat:"anatomy", name:"Anatomical studies (Cleveland)",source:"cma",    query:"anatomical", type:"Drawing", level:2},
-    {cat:"hands",   name:"Drawings of hands",            source:"commons", query:"Category:Drawings of hands", level:1, calls:20},
+    {cat:"hands",   name:"Drawings of hands",            source:"commons", query:"Category:Drawings of hands", level:1, calls:12},
     {cat:"hands",   name:"Hand studies (AIC)",           source:"aic",     query:"study of hands", type:"drawing", level:1},
     {cat:"hands",   name:"Hand studies (Cleveland)",     source:"cma",     query:"hands", type:"Drawing", level:1},
     {cat:"heads",   name:"Head studies (AIC)",           source:"aic",     query:"head study", type:"drawing", medium:"chalk|charcoal|crayon|graphite|pencil", exclude:NO_SCENERY, level:1},
@@ -278,14 +290,14 @@ const CONFIG = {
     {cat:"drapery", name:"Drapery studies (AIC)",        source:"aic",     query:"drapery study", type:"drawing", level:2},
     {cat:"drapery", name:"Drapery studies (Cleveland)",  source:"cma",     query:"drapery", type:"Drawing", level:2},
     // Figure
-    {cat:"gesture", name:"Muybridge · motion studies",   source:"commons", query:"Category:Motion studies by Eadweard Muybridge", level:1, calls:20},
+    {cat:"gesture", name:"Muybridge · motion studies",   source:"commons", query:"Category:Motion studies by Eadweard Muybridge", level:1, calls:12},
     {cat:"drawing", name:"Chalk figure studies",         source:"aic",     query:"chalk figure study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1},
     {cat:"drawing", name:"Red chalk (sanguine)",         source:"aic",     query:"red chalk study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1},
     {cat:"drawing", name:"Figure studies (Cleveland)",   source:"cma",     query:"figure study", type:"Drawing", exclude:NO_SCENERY, level:1},
     {cat:"nude",    name:"Nude studies (AIC)",           source:"aic",     query:"nude study", type:"drawing", exclude:NO_SCENERY, level:1},
     {cat:"nude",    name:"Nude studies (Cleveland)",     source:"cma",     query:"nude", type:"Drawing", exclude:NO_SCENERY, level:1},
     // Sketch to finish
-    {cat:"studies", name:"Studies (Commons)",            source:"commons", query:"Category:Studies (drawings)", level:1, calls:20},
+    {cat:"studies", name:"Studies (Commons)",            source:"commons", query:"Category:Studies (drawings)", level:1, calls:12},
     {cat:"studies", name:"Studies for paintings (AIC)",  source:"aic",     query:"study for", type:"drawing", level:1},
     {cat:"studies", name:"Sketches (AIC)",               source:"aic",     query:"sketch", type:"drawing", level:1},
     {cat:"studies", name:"Studies (Cleveland)",          source:"cma",     query:"study for", type:"Drawing", level:1},
@@ -303,7 +315,7 @@ const CONFIG = {
     {cat:"engraving", name:"Doré · Don Quixote",         source:"commons", query:"Category:Don Quijote illustrated by Gustave Doré", level:3},
     {cat:"engraving", name:"Dürer · engravings",         source:"commons", query:"Category:Engravings by Albrecht Dürer", level:3},
     {cat:"engraving", name:"Rembrandt · etchings",       source:"commons", query:"Category:Etchings by Rembrandt", level:3},
-    {cat:"engraving", name:"Goya · Los Caprichos",       source:"commons", query:"Category:Los Caprichos", level:3, calls:20},
+    {cat:"engraving", name:"Goya · Los Caprichos",       source:"commons", query:"Category:Los Caprichos", level:3, calls:12},
     {cat:"woodblock", name:"Hokusai",                    source:"aic",     query:"Hokusai", type:"print", level:2},
     {cat:"woodblock", name:"Utamaro",                    source:"aic",     query:"Utamaro", type:"print", level:2},
     {cat:"woodblock", name:"Hiroshige",                  source:"aic",     query:"Hiroshige", type:"print", level:2},
@@ -320,20 +332,21 @@ const CONFIG = {
     {cat:"impressionism", name:"Impressionism (AIC)",    source:"aic",     query:"impressionism", type:"painting", style:"impression", level:2},
     {cat:"impressionism", name:"Post-Impressionism (AIC)",source:"aic",    query:"post-impressionism", type:"painting", style:"post-impression", level:2},
     {cat:"impressionism", name:"Impressionism (Cleveland)",source:"cma",   query:"impressionism", type:"Painting", level:2},
-    {cat:"expressionism", name:"Schiele · drawings",     source:"commons", query:"Category:Drawings by Egon Schiele", level:2, calls:20},
+    {cat:"expressionism", name:"Schiele · drawings",     source:"commons", query:"Category:Drawings by Egon Schiele", level:2, calls:12},
     {cat:"expressionism", name:"Expressionism (AIC)",    source:"aic",     query:"expressionism", type:"painting|print|drawing", style:"expression", level:2},
     {cat:"expressionism", name:"Expressionism (Cleveland)",source:"cma",   query:"expressionism", level:2},
-    {cat:"abstraction", name:"Kandinsky · abstract",     source:"commons", query:"Category:Abstract paintings by Wassily Kandinsky", level:2, calls:20},
+    {cat:"abstraction", name:"Kandinsky · abstract",     source:"commons", query:"Category:Abstract paintings by Wassily Kandinsky", level:2, calls:12},
     {cat:"abstraction", name:"af Klint · Paintings for the Temple", source:"commons", query:"Category:The Paintings for the Temple (Hilma af Klint)", level:2},
     {cat:"abstraction", name:"Abstraction (AIC)",        source:"aic",     query:"abstraction", type:"painting", style:"abstract|cubis|futuris|suprematis|de stijl|neo-plastic", level:2},
   ],
   maxPerSet: 120,   // more is not needed and keeps loading fast
-  commonsCalls: 12, // default max API calls per Commons set; each subcategory costs one
-  aicPages: 2,      // × 100 search results
-  cmaPages: 2,      // × 100 search results
+  commonsCalls: 8,  // default max API calls per Commons set; each subcategory costs one
+  aicPages: 1,      // × 100 search results
+  cmaPages: 1,      // × 100 search results
   width: 1920,      // image width on Commons (one of Wikimedia's standard sizes)
   aicWidth: 1686,   // IIIF width at the Art Institute; falls back to 843 when a size is refused
-  cacheHours: 72,   // keep search results on this device
+  cacheHours: 72,   // keep live search results on this device
+  snapshot: "sets.json",   // weekly snapshot of every set (tools/snapshot.mjs); "" to disable
 };
 
 /* ---------- Complexity: set level, nudged by what the title and medium say ---------- */
@@ -387,7 +400,7 @@ const levelOf = s => { const m = /(?:^|[^a-z])n([123])(?:[^0-9]|$)/i.exec(s); if
 const queue = (n => { let active = 0; const q = [];
   const pump = () => { while (active < n && q.length){ const [fn, res, rej] = q.shift(); active++; fn().then(res, rej).finally(() => { active--; pump(); }); } };
   return fn => new Promise((res, rej) => { q.push([fn, res, rej]); pump(); });
-})(6);
+})(8);
 async function getJSON(url, tries = 2, timeout = 15000){
   for (let k = 0; ; k++){
     const ac = new AbortController(), t = setTimeout(() => ac.abort(), timeout);
@@ -514,19 +527,20 @@ async function loadCMA(set){
   return out.slice(0, CONFIG.maxPerSet);
 }
 
-/* ---------- Loading sets (only for ticked categories), cached on the device ---------- */
+/* ---------- Loading sets: snapshot first, then the device cache, then live (only for ticked categories) ---------- */
 const LOADERS = {commons: loadCommons, wikidata: loadWikidata, aic: loadAIC, cma: loadCMA};
 const sets = CONFIG.sets.map(set => ({set, status:"idle", items:[], err:""}));
 let local = [];                                    // your own images
 const prefs = store.get("sk3:prefs") || {};
 const rejected = new Set(store.get("sk3:rejected") || store.get("sk2:rejected") || store.get("sk1:rejected") || []);
 const selected = new Set((prefs.selected || CONFIG.defaults).filter(k => CATS.has(k)));
-const cacheKey = set => "sk3:set:" + JSON.stringify([set.source, set.query, set.type, set.medium, set.style, set.exclude, set.calls, CONFIG.licences, CONFIG.width, CONFIG.maxPerSet]);
+const cacheKey = set => "sk3:set:" + JSON.stringify([set.source, set.query, set.type, set.medium, set.style, set.exclude, set.calls, CONFIG.licences, CONFIG.width, CONFIG.aicWidth, CONFIG.maxPerSet]);
 const busy = st => st.status === "loading";
-function applySet(st, raw, status){
+let snapshotDate = null;
+function applySet(st, raw, status, quiet){
   const base = st.set.level || CATS.get(st.set.cat).d;
   st.items = raw.map(o => ({...o, ck: st.set.cat, d: complexity(base, o.title, o.medium || ""), grp: st.set.name, src:"web"}));
-  st.status = raw.length ? status : "empty"; refresh();
+  st.status = raw.length ? status : "empty"; if (!quiet) refresh();
 }
 async function loadSet(st, fresh){
   if (busy(st) || (!fresh && (st.status === "ok" || st.status === "empty"))) return;
@@ -541,6 +555,26 @@ async function loadSet(st, fresh){
 }
 const loadCategory = k => Promise.all(sets.filter(st => st.set.cat === k).map(st => loadSet(st)));
 const loadSelected = () => Promise.all([...selected].map(loadCategory));
+const loadAll = () => Promise.all(sets.map(st => loadSet(st)));
+// The weekly snapshot (sets.json) fills every set at once; a newer live fetch on this device wins.
+async function seedFromSnapshot(){
+  if (!CONFIG.snapshot) return;
+  try {
+    const r = await fetch(CONFIG.snapshot, {cache:"no-cache"}); if (!r.ok) return;
+    const snap = await r.json(); if (!snap || !snap.sets) return;
+    snapshotDate = snap.t;
+    for (const st of sets){
+      const e = snap.sets[st.set.name], key = cacheKey(st.set), own = store.get(key);
+      if (!e || e.k !== key || !e.items || !e.items.length || st.status !== "idle") continue;
+      if (own && own.items && own.t > snap.t && Date.now() - own.t < CONFIG.cacheHours * 36e5) continue;
+      applySet(st, e.items, "ok", true);
+    }
+    $("snapDate").textContent = new Date(snap.t).toISOString().slice(0, 10);
+    refresh();
+  } catch {}
+}
+const snapshot = () => ({t: Date.now(), sets: Object.fromEntries(sets.filter(st => st.status === "ok").map(st =>
+  [st.set.name, {k: cacheKey(st.set), items: st.items.map(({ck, d, grp, src, bad, ...o}) => o)}]))});
 
 function pool(){
   const out = [], ids = new Set();
@@ -549,49 +583,40 @@ function pool(){
 }
 const sessionPool = () => pool().filter(p => selected.has(p.ck) && !p.bad);
 
-/* ---------- Session plans ---------- */
+/* ---------- Session plans: each draws from its own range of complexity (d) ---------- */
 const PLANS = [
-  {id:"gesture", t:"Gesture", h:"Line of action only.", seg:[[30,20]]},
-  {id:"buildup", t:"Build-up", h:"From gesture to a short study.", seg:[[30,8],[60,4],[180,2],[600,1]]},
-  {id:"class",   t:"Class", h:"A full life-drawing class.", seg:[[30,10],[60,5],[300,3],[600,2],[900,1]]},
-  {id:"sketch",  t:"Sketch to finish", h:"Sketches first, the finished work last.", seg:[[60,6],[180,3],[300,2],[1200,1]]},
-  {id:"thumbs",  t:"Thumbnails", h:"Small value sketches: masses and composition.", seg:[[120,12]]},
-  {id:"study",   t:"Long study", h:"Structure, then value.", seg:[[1200,3]]},
-  {id:"copy",    t:"Master copy", h:"One work, copied as faithfully as you can.", seg:[[2700,1]]},
-  {id:"free",    t:"Free", h:"your choice", seg:null},
+  {id:"short",   t:"Short",       h:"Line and proportion: plates, gestures, hands, quick studies.",       seg:[[30,10],[60,10],[120,5]],          d:[1,1.5]},
+  {id:"buildup", t:"Build-up",    h:"From a two-minute study to a short painting. The whole ladder.",     seg:[[120,6],[300,3],[600,1]],          d:[1,3]},
+  {id:"class",   t:"Class",       h:"A full session: studies first, a finished work to close.",            seg:[[120,8],[300,4],[600,2],[1200,1]], d:[1,3]},
+  {id:"copy",    t:"Master copy", h:"One finished painting, copied as faithfully as you can.",             seg:[[2700,1]],                         d:[2.2,3]},
+  {id:"free",    t:"Free",        h:"Your own length and count, any image.",                              seg:null,                               d:[1,3]},
 ];
-// Shortest pose: blocks shorter than this are lifted to it and merged; copying a master is not life drawing.
-const PACES = [30, 60, 120, 300];
-let planId = PLANS.some(p => p.id === prefs.plan) ? prefs.plan : "buildup", minPose = PACES.includes(prefs.minPose) ? prefs.minPose : 120;
-function floored(seg){ const out = []; for (const [d, n] of seg){ const dd = Math.max(d, minPose), l = out[out.length - 1]; if (l && l[0] === dd) l[1] += n; else out.push([dd, n]); } return out; }
+let planId = PLANS.some(p => p.id === prefs.plan) ? prefs.plan : "buildup";
+const plan = () => PLANS.find(p => p.id === planId);
 const fmt = s => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return h ? `${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}` : `${m}:${String(x).padStart(2,"0")}`; };
 const fmtL = s => s < 60 ? `${s} s` : s % 60 ? `${Math.floor(s/60)}m${s%60}s` : `${s/60} min`;
 const fmtMin = s => s < 60 ? `${s} s` : `${Math.round(s/60)} min`;
-const segments = () => planId === "free" ? [[+$("freeDur").value, +$("freeCount").value]] : floored(PLANS.find(p => p.id === planId).seg);
-const planTotal = p => p.seg ? floored(p.seg).reduce((a,[d,n]) => a + d*n, 0) : 0;
 const fmtSeg = segs => segs.map(([d, n]) => `${n}×${d < 60 ? d + "s" : d % 60 ? Math.floor(d/60) + "m" + d % 60 + "s" : d/60 + "m"}`).join(" · ");
+const segments = () => planId === "free" ? [[+$("freeDur").value, +$("freeCount").value]] : plan().seg;
+const planTotal = p => p.seg ? p.seg.reduce((a,[d,n]) => a + d*n, 0) : 0;
+// The images a plan may use: those within its complexity range, or everything when too few fit.
+function planPool(){ const [lo, hi] = plan().d, all = sessionPool(), fit = all.filter(p => p.d >= lo && p.d <= hi); return fit.length >= 10 ? fit : all; }
 
 function savePrefs(){
-  store.set("sk3:prefs", {selected:[...selected].filter(k => !k.startsWith("folder:")), plan:planId, minPose,
+  store.set("sk3:prefs", {selected:[...selected].filter(k => !k.startsWith("folder:")), plan:planId,
     gray:$("optGray").checked, brk:$("optBreak").checked, sound:$("optSound").checked});
 }
 function renderPlans(){
   $("plans").innerHTML = "";
   for (const p of PLANS){
-    const b = document.createElement("button"); b.className = "chip"; b.dataset.plan = p.id; b.setAttribute("aria-pressed", p.id === planId); b.title = p.h;
-    b.innerHTML = `${esc(p.t)}${p.seg ? ` <small>${fmtMin(planTotal(p))}</small>` : ""}`;
+    const b = document.createElement("button"); b.className = "plan"; b.dataset.plan = p.id; b.setAttribute("aria-pressed", p.id === planId);
+    const lad = p.seg ? p.seg.map(([d,n]) => Array.from({length:Math.min(n,8)}, () => `<i style="height:${Math.max(4,Math.min(20,Math.log2(d/15)*4.5))}px"></i>`).join("")).join("")
+                      : `<i style="height:9px;opacity:.35"></i>`.repeat(3);
+    b.innerHTML = `<span class="t">${esc(p.t)}${p.seg ? `<small>${fmtMin(planTotal(p))}</small>` : ""}</span><span class="h">${esc(p.h)}</span><span class="s">${p.seg ? fmtSeg(p.seg) : "duration × count below"}</span><span class="ladder">${lad}</span>`;
     b.onclick = () => { planId = p.id; renderPlans(); updateSum(); savePrefs(); };
     $("plans").appendChild(b);
   }
-  const p = PLANS.find(x => x.id === planId);
-  $("planInfo").textContent = [p.seg ? fmtSeg(floored(p.seg)) : "", p.h].filter(Boolean).join(" · ");
   $("free").classList.toggle("on", planId === "free");
-  $("paces").innerHTML = "";
-  for (const d of PACES){
-    const b = document.createElement("button"); b.className = "chip"; b.dataset.pace = d; b.setAttribute("aria-pressed", d === minPose); b.textContent = fmtMin(d);
-    b.onclick = () => { minPose = d; renderPlans(); updateSum(); savePrefs(); };
-    $("paces").appendChild(b);
-  }
 }
 
 /* ---------- Settings view ---------- */
@@ -619,10 +644,10 @@ function renderCats(){
 }
 function updateSum(){
   const segs = segments(), total = segs.reduce((a,[d,n]) => a + d*n, 0), poses = segs.reduce((a,[,n]) => a + n, 0);
-  const avail = sessionPool().length, loading = sets.some(st => busy(st) && selected.has(st.set.cat));
-  $("sum").textContent = `${plural(poses, "pose")} · ${fmt(total)}` + (avail ? ` · ${plural(avail, "image")}` : loading ? " · loading…" : selected.size ? "" : " · tick what to draw");
-  // Start as soon as there is enough to fill the session, or everything ticked has arrived.
-  $("startBtn").disabled = !(avail >= poses || (avail > 0 && !loading));
+  const all = sessionPool().length, fit = planPool().length, loading = sets.some(st => busy(st) && selected.has(st.set.cat));
+  $("sum").textContent = `${plural(poses, "pose")} · ${fmt(total)}` + (fit ? ` · ${plural(fit, "image")}${fit < all ? " fit this session" : ""}` : loading ? " · loading…" : selected.size ? "" : " · tick what to draw");
+  // Start as soon as there is enough to fill the session (or ten images), or everything ticked has arrived.
+  $("startBtn").disabled = !(fit >= Math.min(poses, 10) || (fit > 0 && !loading));
 }
 
 /* ---------- Your own images: path = Folder/Subfolder/file → category = first subfolder ---------- */
@@ -690,13 +715,13 @@ $("copyVerdict").onclick = async () => {
   try { await navigator.clipboard.writeText(text); $("keurStatus").textContent = "Verdict copied."; $("verdictOut").hidden = true; }
   catch { $("verdictOut").value = text; $("verdictOut").hidden = false; $("verdictOut").select(); $("keurStatus").textContent = "Copying failed; select the text below."; }
 };
-$("loadAllBtn").onclick = () => Promise.all(sets.map(st => loadSet(st)));
+$("loadAllBtn").onclick = loadAll;
 $("refetch").onclick = () => { for (const st of sets) st.sample = null; revSet = null; renderReview(); Promise.all(sets.filter(st => st.status !== "idle").map(st => loadSet(st, true))); };
 
 /* ---------- Building a session ----------
-   Each pose duration gets a target complexity: the shortest duration in the plan gets the lowest score in the pot,
-   the longest the highest. Among images near that score: first a random category, then a set, then an image,
-   so one large set does not crowd out the rest. */
+   Each pose duration gets a target complexity: the shortest duration in the plan gets the lowest score in the
+   plan's pool, the longest the highest. Among images near that score: first a random category, then a set,
+   then an image, so one large set does not crowd out the rest. */
 function byKey(list, f){ const m = new Map(); for (const x of list){ const k = f(x); m.has(k) ? m.get(k).push(x) : m.set(k, [x]); } return [...m.values()]; }
 const balanced = list => pickRandom(pickRandom(byKey(pickRandom(byKey(list, p => p.ck)), p => p.grp)));
 function pickFor(want, cand, used){
@@ -707,7 +732,7 @@ function pickFor(want, cand, used){
 function build(){
   const segs = segments(), slots = [];
   segs.forEach(([d, n], si) => { for (let i = 0; i < n; i++) slots.push({dur:d, seg:si}); });
-  const cand = sessionPool(), lv = cand.map(p => p.d), lo = Math.min(...lv), hi = Math.max(...lv);
+  const cand = planPool(), lv = cand.map(p => p.d), lo = Math.min(...lv), hi = Math.max(...lv);
   const durs = [...new Set(slots.map(s => s.dur))].sort((a, b) => a - b), used = new Set();
   for (const s of slots){
     const t = durs.length > 1 ? durs.indexOf(s.dur) / (durs.length - 1) : Math.min(1, Math.max(0, Math.log2(s.dur / 30) / Math.log2(40)));
@@ -751,10 +776,10 @@ function ensure(i){
     return false;
   })());
 }
-function preloadAll(){   // two workers run ahead through the whole session
+function preloadAll(){   // three workers run ahead through the whole session
   const sess = S; let k = 0;
   const worker = async () => { while (sess === S && k < sess.slots.length) await ensure(k++); };
-  worker(); worker();
+  worker(); worker(); worker();
 }
 
 /* ---------- Playback ---------- */
@@ -836,6 +861,7 @@ function setToggle(id, on){
   if (id === "bGrid") $("grid").hidden = !on;
 }
 const flipT = id => setToggle(id, $(id).getAttribute("aria-pressed") !== "true");
+
 /* ---------- Fit and zoom: the image fills the stage; pinch, drag, double-tap and wheel zoom into it ---------- */
 const pic = $("pic"), view = $("view"), Z = {z:1, tx:0, ty:0, w:0, h:0};
 function fitPic(){
@@ -916,10 +942,11 @@ if (prefs.gray != null) $("optGray").checked = prefs.gray;
 if (prefs.brk != null) $("optBreak").checked = prefs.brk;
 if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
-// For tests and the curious: read-only.
-window.schetsklok = {CONFIG, sets, pool, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
+// For tests, the snapshot tool and the curious.
+window.schetsklok = {CONFIG, sets, pool, planPool, loadAll, snapshot, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
 
-renderPlans(); refresh(); loadSelected();
+renderPlans(); refresh();
+seedFromSnapshot().then(loadSelected);
 })();
 </script>
 </body>

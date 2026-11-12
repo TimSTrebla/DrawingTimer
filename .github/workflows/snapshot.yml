@@ -1,0 +1,32 @@
+name: Snapshot sources
+
+# Refreshes sets.json, the weekly snapshot of every search set, so a first visit needs no API calls.
+on:
+  schedule:
+    - cron: "17 4 * * 1"   # Mondays, 04:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright with Chromium
+        run: |
+          npm init -y > /dev/null
+          npm install --no-save playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Fetch every set through the page itself
+        run: node tools/snapshot.mjs
+      - name: Commit sets.json when it changed
+        run: |
+          git config user.name "snapshot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sets.json
+          if git diff --cached --quiet; then echo "no change"; else git commit -m "Sources snapshot $(date -u +%F)" && git push; fi

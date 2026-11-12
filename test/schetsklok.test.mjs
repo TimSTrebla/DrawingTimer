@@ -136,11 +136,12 @@ const page = await ctx.newPage();
 const errors = [], expected404 = [], unknown = [];
 page.on("console", m => { if (m.type() === "error") (/404/.test(m.text()) ? expected404 : errors).push(m.text()); });
 page.on("pageerror", e => errors.push("pageerror: " + e.message));
-let imgOk = 0, imgBad = 0; const badUrls = new Set();   // one broken image may be asked for at two sizes
+let imgOk = 0, imgBad = 0, snapBody = null; const badUrls = new Set();   // one broken image may be asked for at two sizes
 const json = (route, body) => route.fulfill({ contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
 await page.route("**/*", route => {
   const u = route.request().url();
   if (u === "http://localhost:8123/") return route.fulfill({ contentType: "text/html", body: html });
+  if (u === "http://localhost:8123/sets.json") return snapBody ? json(route, snapBody) : route.fulfill({ status: 404, body: "" });
   if (u.startsWith("https://fonts.googleapis.com/")) return route.fulfill({ contentType: "text/css", body: "" });
   if (u.startsWith("https://commons.wikimedia.org/w/api.php")) return json(route, commons(u));
   if (u.startsWith("https://query.wikidata.org/sparql")) return json(route, wikidata(u));
@@ -216,16 +217,26 @@ check(info.find(s => s.name === "Abstraction (AIC)").n > 12, "style filter falls
 const folders = await page.evaluate(() => ["Schetsen", "Gravures", "Handen n1", "AI", "Pastel", "Etsen", "Anatomie", "Krijttekeningen", "Beeldhouwwerk", "Rijksmuseum", "Voorstudies"].map(window.schetsklok.catForFolder));
 check(folders.join() === "drawing,engraving,hands,ai,pastel,engraving,anatomy,drawing,sculpture,rijks,studies", `own folders land in the right category: ${folders.join(", ")}`);
 
+console.log("\n2b · Each plan draws from its own complexity range");
+await page.click('[data-plan="short"]');
+let pp = await page.evaluate(() => window.schetsklok.planPool().map(p => p.d));
+check(pp.length > 10 && pp.every(d => d <= 1.5), `Short: ${pp.length} images, all complexity ≤ 1.5`);
+check(/fit this session/.test(await page.$eval("#sum", e => e.textContent)), "start line says how many images fit");
+const scats = await page.evaluate(() => [...new Set(window.schetsklok.planPool().map(p => p.ck))].sort());
+check(scats.includes("bargue") && scats.includes("gesture") && !scats.includes("famous"), `Short draws from ${scats.join(", ")}`);
+await page.click('[data-plan="copy"]');
+pp = await page.evaluate(() => window.schetsklok.planPool().map(p => p.d));
+check(pp.length > 10 && pp.every(d => d >= 2.2), `Master copy: ${pp.length} images, all complexity ≥ 2.2`);
+const ccats = await page.evaluate(() => [...new Set(window.schetsklok.planPool().map(p => p.ck))].sort());
+check(ccats.includes("famous") && ccats.includes("rijks") && !ccats.includes("bargue"), `Master copy draws from ${ccats.join(", ")}`);
+check(await page.$eval('.plan[data-plan="buildup"] small', e => e.textContent) === "37 min" && await page.$eval('.plan[data-plan="class"] small', e => e.textContent) === "76 min" && await page.$eval('.plan[data-plan="short"] small', e => e.textContent) === "25 min", "plan cards show totals: Short 25, Build-up 37, Class 76 min");
+check(await page.$eval('.plan[data-plan="buildup"] .s', e => e.textContent) === "6×2m · 3×5m · 1×10m" && /two-minute study/.test(await page.$eval('.plan[data-plan="buildup"] .h', e => e.textContent)), "plan card shows breakdown and explanation");
+
 console.log("\n3 · Build-up with Engraving + Drawing only, full screen");
 for (const k of on) if (k !== "drawing" && k !== "engraving") await page.click(`.chip[data-cat="${k}"]`);   // untick the rest
 on = await pressed();
 check(on.sort().join() === "drawing,engraving", `only Engraving and Drawing ticked (${on.join(", ")})`);
 await page.click('[data-plan="buildup"]');
-check(await page.$eval('.chip[data-pace="120"]', e => e.getAttribute("aria-pressed")) === "true", "shortest pose is 2 min by default");
-check(/^12×2m · 2×3m · 1×10m · /.test(await page.$eval("#planInfo", e => e.textContent)) && await page.$eval('.chip[data-plan="buildup"] small', e => e.textContent) === "40 min", "Build-up at 2 min: 12×2m · 2×3m · 1×10m = 40 min, short blocks merged");
-check(await page.$eval('.chip[data-plan="class"] small', e => e.textContent) === "80 min", "Class at 2 min: 80 min");
-await page.click('.chip[data-pace="30"]');
-check(/^8×30s · 4×1m · 2×3m · 1×10m · /.test(await page.$eval("#planInfo", e => e.textContent)), "at 30 s the plan is as written");
 check(await page.isEnabled("#startBtn"), "start button enabled");
 await page.click("#startBtn");
 await page.waitForFunction(() => window.schetsklok.session()?.ready);
@@ -261,16 +272,16 @@ for (let k = 0; k < 4000; k++) {
 }
 const S = await page.evaluate(() => { const S = window.schetsklok.session(); return { over: S.over, log: S.log, swaps: S.swaps.length, slots: S.slots.map(s => ({ dur: s.dur, d: s.it.d, ck: s.it.ck, url: s.it.url })) }; });
 check(S.over, "session ran to the end screen");
-check(S.log.length === 15, `15 poses shown (${S.log.length})`);
+check(S.log.length === 10, `10 poses shown (${S.log.length})`);
 check(S.log.every(l => l.w > 1 && l.h > 1), "every image shown had real dimensions (no empty image)");
 check(!S.slots.some(s => /BROKEN_|\/bad-/.test(s.url)), "no broken image stayed in the session");
 const badInSession = imgBad - badBefore;
 if (badInSession) check(S.swaps >= badInSession, `every broken image was replaced (${S.swaps} swaps for ${badInSession} × 404; extra swaps are slow loads)`);
 else console.log("  info no broken image hit in this session; the stress run (BROKEN=0.6) covers swapping");
-check(breaks === 3, `3 breaks between blocks (${breaks})`);
+check(breaks === 2, `2 breaks between blocks (${breaks})`);
 check(overlayWhileReady === 0, "loading screen never visible while a pose was running");
 const lv = S.slots.map(s => Math.round(s.d)).join("");
-check(/^1{12}3{3}$/.test(lv), `30 s and 1 min = drawing (~1), 3 and 10 min = engraving (3): ${lv}`);
+check(/^1{6}[13]{3}3$/.test(lv), `2 min = drawing (~1), 10 min = engraving (3), 5 min either: ${lv}`);
 await page.click("#back");
 check(await page.waitForFunction(() => !document.fullscreenElement, null, { timeout: 3000 }).then(() => true, () => false), "stop leaves full screen");
 
@@ -290,18 +301,34 @@ await page.screenshot({ path: join(out, "4-review.png"), fullPage: true });
 check(await page.evaluate(() => JSON.parse(localStorage.getItem("sk3:rejected")).length) === 1, "rejection stored on the device");
 
 console.log("\n5 · Reload: choices remembered, results from the cache");
-await page.click('[data-plan="sketch"]'); await page.click('.chip[data-pace="60"]');
+await page.click('[data-plan="class"]');
 await page.click('.chip[data-cat="hands"]');
 await settled(["hands"]);
 const total = () => [...calls.commons.values()].reduce((a, b) => a + b, 0) + calls.wikidata.length + calls.aic.length + calls.cma.length;
 const callsBefore = total();
 await page.reload();
 await settled(["drawing", "engraving", "hands"]);
-const after = { plan: await page.$eval(".chip[data-plan][aria-pressed=true]", e => e.dataset.plan), cats: (await pressed()).sort() };
-check(after.plan === "sketch" && after.cats.join() === "drawing,engraving,hands", `plan and categories remembered (${after.plan}; ${after.cats.join(", ")})`);
-check(await page.$eval('.chip[data-pace="60"]', e => e.getAttribute("aria-pressed")) === "true", "shortest pose remembered (1 min)");
+const after = { plan: await page.$eval(".plan[data-plan][aria-pressed=true]", e => e.dataset.plan), cats: (await pressed()).sort() };
+check(after.plan === "class" && after.cats.join() === "drawing,engraving,hands", `plan and categories remembered (${after.plan}; ${after.cats.join(", ")})`);
 check(total() === callsBefore, "second visit: no new API calls");
-check(await page.$eval("#planInfo", e => e.textContent).then(t => /^6×1m · 3×3m · 2×5m · 1×20m/.test(t)), "plan breakdown shown under the chips");
+check(await page.$eval('.plan[data-plan="class"] .s', e => e.textContent) === "8×2m · 4×5m · 2×10m · 1×20m", "Class card shows its breakdown");
+
+console.log("\n6 · Snapshot: a cleared device fills every set from sets.json, no API calls");
+await page.evaluate(() => window.schetsklok.loadAll()); await settled(catKeys);
+snapBody = await page.evaluate(() => window.schetsklok.snapshot());
+const snapSets = Object.keys(snapBody.sets).length, snapTotal = await page.evaluate(() => window.schetsklok.sets.length);
+check(snapSets === snapTotal, `snapshot holds all ${snapSets} sets (${(JSON.stringify(snapBody).length / 1e6).toFixed(1)} MB)`);
+await page.evaluate(() => localStorage.clear());
+const before6 = total();
+await page.reload();
+await page.waitForFunction(() => document.getElementById("snapDate").textContent !== "none loaded", null, { timeout: 10000 });
+const okNow = await page.evaluate(() => window.schetsklok.sets.filter(s => s.status === "ok").length);
+check(okNow === snapSets, `${okNow} sets filled from the snapshot at once`);
+check(total() === before6, "no API call for them");
+check(await page.$eval('.chip[data-cat="colour"] small', e => e.textContent) !== "", "untouched categories show their count straight away");
+check((await pressed()).length === 0, "still nothing ticked: the snapshot fills, the person chooses");
+await page.click('.chip[data-cat="colour"]');
+check(total() === before6 && await page.isEnabled("#startBtn"), "ticking a snapshotted category costs no API call; start is possible at once");
 
 console.log(`\nconsole errors: ${errors.length}${errors.length ? "\n  " + errors.join("\n  ") : ""}`);
 console.log(`deliberately broken images (404 in console, expected): ${expected404.length}`);

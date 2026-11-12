@@ -16,16 +16,31 @@ zoom into it, and the zoom resets with the next image.
 | Modern | Colour & light · Impressionism · Expressionism (incl. Schiele) · Abstraction (Kandinsky, af Klint) |
 
 Nothing is ticked on a first visit: you choose, and the device remembers it.
-Sessions: Gesture · Build-up · Class · Sketch to finish · Thumbnails · Long study · Master copy · Free.
-**Shortest pose** (30 s · 1 min · 2 min · 5 min, default 2 min) lifts every block shorter than it and merges them, so
-Class at 2 min runs 15×2m · 3×5m · 2×10m · 1×15m: copying a master is not life drawing.
-Keys: space pause · ← → previous/next · G greyscale · F mirror · R grid · Esc stop. Choices are remembered on the device.
+
+| Session | Poses | Draws from |
+|---|---|---|
+| Short · 25 min | 10×30s · 10×1m · 5×2m | complexity ≤ 1.5: plates, gestures, hands, quick studies |
+| Build-up · 37 min | 6×2m · 3×5m · 1×10m | the whole ladder |
+| Class · 76 min | 8×2m · 4×5m · 2×10m · 1×20m | the whole ladder |
+| Master copy · 45 min | 1×45m | complexity ≥ 2.2: finished paintings |
+| Free | your own length and count | everything |
+
+Keys: space pause · ← → previous/next · G greyscale · F mirror · R grid · Esc stop.
 
 ## Time follows complexity
 Every image gets a complexity score from 1 to 3: its set's level, nudged by the title and medium ("study", "sketch",
-chalk and ink go down; oil goes up; battles, feasts and the like go up). Within a plan the shortest poses get the
-lowest scores in the pot and the longest the highest, so a 30-second pose is a chalk study and the 20-minute one a
-finished painting. The score is shown with every image and in the review grid.
+chalk and ink go down; oil goes up; battles, feasts and the like go up). Each session draws from its own range of
+that score (table above; when fewer than ten images fit, everything ticked is used), and within a session the
+shortest poses get the lowest scores and the longest the highest. The score is shown with every image and in the
+review grid.
+
+## Quick first visit: the snapshot
+`sets.json` is a weekly snapshot of every search set, made by `tools/snapshot.mjs`: it opens `index.html` headless
+and lets the page itself fetch every set from the real APIs, so there is one implementation of the sources. The
+workflow `.github/workflows/snapshot.yml` runs it on Mondays and commits the file when it changed (or run it by hand:
+Actions → Snapshot sources → Run workflow). The page reads the snapshot first, so every category shows its count at
+once and ticking is immediate; a set missing from it is fetched live and kept on the device for three days. A set
+whose definition changed in `CONFIG` is ignored in the snapshot until the next run.
 
 ## Sources and licences
 - **Wikimedia Commons**: fixed categories; public domain, CC0 or CC BY (e.g. the Wellcome Collection's anatomy scans).
@@ -48,7 +63,7 @@ Everything lives in the `CONFIG` object at the top of the script in `index.html`
   Commons sets always drop blank pages, covers, title pages and book initials; a small subcategory (≤ 6 files) is
   usually one work in several scans, so only one of them goes into the pot.
 
-Only the sets of ticked categories are loaded; results are cached on the device for 72 hours.
+Without a snapshot, only the sets of ticked categories are loaded live; results are cached on the device for 72 hours.
 
 ## Review
 *Review sources* shows a sample of 20 per search set with its complexity score. Tap an image to reject it (it stays
@@ -62,6 +77,7 @@ uploaded.
 
 ## Test
 `node test/schetsklok.test.mjs` (needs Playwright). Runs against mocked APIs: defaults, filters and licences, lazy
-loading, the soft style filter, complexity scores, folder keywords, full screen, remembered choices, and a full
-"Build-up" without an empty image, with pinch, drag and double-tap zoom, even when 30% of images fail to load (`BROKEN=0.6` for the stress run). The real
-APIs are deliberately not used in the test; the quality of their results is reviewed by hand.
+loading, the soft style filter, complexity scores and per-plan pools, folder keywords, full screen, pinch, drag and
+double-tap zoom, remembered choices, the snapshot path, and a full "Build-up" without an empty image, even when 30%
+of images fail to load (`BROKEN=0.6` for the stress run). The real APIs are deliberately not used in the test; the
+quality of their results is reviewed by hand, and the snapshot workflow is proven by its first run on GitHub.
