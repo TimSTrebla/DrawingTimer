@@ -2,24 +2,33 @@
 
 **Live:** https://timstrebla.github.io/DrawingTimer/
 
-Timed drawing practice set up like an academy course. In a class session the poses grow longer (30 s → 45 min)
-and the images grow with them from simple (n1) to complex (n3). One static file, `index.html`: no build step,
-no backend, no API keys.
+Timed drawing from the masters, set up like an academy course. Short poses get sketches and studies, long ones the
+finished work. One static file, `index.html`: no build step, no backend, no API keys. Starting a session goes full
+screen; the screen stays awake.
 
 | Group | Categories |
 |---|---|
 | Foundations | Bargue & casts · Anatomy (Albinus, Vesalius, Leonardo) · Hands & feet · Heads · Drapery |
-| Figure | Gesture & motion (Muybridge) · Figure studies (chalk, sanguine) · Life drawing (académies) |
-| Masters & media | Engraving & etching (Doré, Dürer, Rembrandt, Goya) · Japanese woodblock · Pastel · Oil: head & figure · Sculpture |
-| Composition | Great scenes (history, myth, bible) |
-| Colour & modern | Colour & light · Impressionism · Expressionism (incl. Schiele) · Abstraction (Kandinsky, af Klint) |
+| Figure | Gesture & motion (Muybridge) · Figure studies (chalk, sanguine) · Life drawing |
+| Sketch to finish | Studies & sketches · Oil sketches · Great scenes · Famous paintings · Rijksmuseum |
+| Media | Engraving & etching (Doré, Dürer, Rembrandt, Goya) · Japanese woodblock · Pastel · Oil: head & figure · Sculpture |
+| Modern | Colour & light · Impressionism · Expressionism (incl. Schiele) · Abstraction (Kandinsky, af Klint) |
 
-Sessions: Gesture sprint · Build-up 30 min · Class 1 hour · Thumbnails 12 × 2 min · Long study 3 × 20 min ·
-Master copy 1 × 45 min · Free. Keys: space pause · ← → previous/next · G greyscale · F mirror · R grid · Esc stop.
-Your choices (categories, plan, options) are remembered on the device.
+Most of the course is ticked on a first visit (not landscapes, nor the categories only your own folder fills).
+Sessions: Gesture · Build-up · Class · Sketch to finish · Thumbnails · Long study · Master copy · Free.
+Keys: space pause · ← → previous/next · G greyscale · F mirror · R grid · Esc stop. Choices are remembered on the device.
+
+## Time follows complexity
+Every image gets a complexity score from 1 to 3: its set's level, nudged by the title and medium ("study", "sketch",
+chalk and ink go down; oil goes up; battles, feasts and the like go up). Within a plan the shortest poses get the
+lowest scores in the pot and the longest the highest, so a 30-second pose is a chalk study and the 20-minute one a
+finished painting. The score is shown with every image and in the review grid.
 
 ## Sources and licences
 - **Wikimedia Commons**: fixed categories; public domain, CC0 or CC BY (e.g. the Wellcome Collection's anatomy scans).
+- **Wikidata (SPARQL)**: *Famous paintings* = works by 42 masters who died in 1955 or earlier, the most widely
+  written-about first; *Rijksmuseum* = paintings in the Rijksmuseum, best known first. Images are the Commons files,
+  mostly the museums' own releases. The Rijksmuseum's own API needs a key, hence this route.
 - **Art Institute of Chicago**: searches, public domain only.
 - **Cleveland Museum of Art**: searches, CC0 only.
 
@@ -28,27 +37,28 @@ Set `licences: "pd"` in `CONFIG` to allow public domain / CC0 only. Code and doc
 
 ## Edit the course
 Everything lives in the `CONFIG` object at the top of the script in `index.html`.
-- **categories**: name, group, default level, one-line "what it trains", and keywords for your own folders.
-- **sets**: `{cat, name, source: "commons" | "aic" | "cma", query, level}` plus optional filters (regular expressions):
-  `type` (AIC artwork type; for Cleveland one of Painting/Drawing/Print/Sculpture), `medium`, `style` (AIC, soft:
-  ignored when fewer than 12 works match), `exclude` (title words), `calls` (Commons API budget, default 16).
+- **categories**: name, group, default level, a one-line "what it trains" (shown as a tooltip and in the review),
+  and keywords for your own folders.
+- **sets**: `{cat, name, source: "commons" | "wikidata" | "aic" | "cma", query, level}` plus optional filters
+  (regular expressions): `type` (AIC artwork type; for Cleveland one of Painting/Drawing/Print/Sculpture), `medium`,
+  `style` (AIC, soft: ignored when fewer than 12 works match), `exclude` (title words), `calls` (Commons API budget).
   Commons sets always drop blank pages, covers, title pages and book initials; a small subcategory (≤ 6 files) is
   usually one work in several scans, so only one of them goes into the pot.
 
 Only the sets of ticked categories are loaded; results are cached on the device for 72 hours.
 
 ## Review
-*Review sources · 20 per set* shows a sample per search set. Tap an image to reject it (it stays out of sessions on
-that device). *Copy verdict* produces a text you can feed back to improve the search set itself. *Load all sets*
-fetches every set for a full review.
+*Review sources* shows a sample of 20 per search set with its complexity score. Tap an image to reject it (it stays
+out of sessions on that device). *Copy verdict* produces a text you can feed back to improve the search set itself.
+*Load all sets* fetches every set for a full review.
 
-## Your own folder
+## Your own images
 Subfolder = category (Anatomy, Hands, Pastel, AI, …; Dutch names work too), `n1`/`n2`/`n3` in a folder or file name
-= level. Keywords match at the start of a word ("ets" → "Etsen", not "Schetsen"); `~` matches anywhere
-("~tekening" → "Krijttekeningen"). The images never leave the device.
+= level. Keywords match at the start of a word ("ets" → "Etsen", not "Schetsen"); `~` matches anywhere. Nothing is
+uploaded.
 
 ## Test
-`node test/schetsklok.test.mjs` (needs Playwright). Runs against mocked APIs: filters and licences, lazy loading,
-the soft style filter, folder keywords, remembered choices, and a full "Build-up · 30 min" without an empty image,
-even when 30% of images fail to load (`BROKEN=0.6` for the stress run). The real APIs are deliberately not used in
-the test; the quality of their results is reviewed by hand.
+`node test/schetsklok.test.mjs` (needs Playwright). Runs against mocked APIs: defaults, filters and licences, lazy
+loading, the soft style filter, complexity scores, folder keywords, full screen, remembered choices, and a full
+"Build-up" without an empty image, even when 30% of images fail to load (`BROKEN=0.6` for the stress run). The real
+APIs are deliberately not used in the test; the quality of their results is reviewed by hand.

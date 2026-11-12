@@ -1,8 +1,8 @@
-// Headless test of index.html against mocked APIs (Wikimedia Commons, AIC, Cleveland Museum of Art).
+// Headless test of index.html against mocked APIs (Wikimedia Commons, Wikidata, AIC, Cleveland Museum of Art).
 // Run: node test/schetsklok.test.mjs   (needs Playwright)
-// Proves: filters and licences, one-work-per-subcategory, lazy loading per category, the soft style filter,
-// session building (short = simple, long = complex), and that a whole "Build-up · 30 min" runs without an
-// empty image, even when ~30% of images fail to load.
+// Proves: defaults, filters and licences, one-work-per-subcategory, lazy loading per category, the soft style
+// filter, complexity scores, session building (short = simple, long = complex), full screen on start, and that
+// a whole "Build-up" runs without an empty image, even when ~30% of images fail to load.
 // Env: BROKEN=0.6 (share of images that deliberately fail) · SHOTS=dir · DSF=2 (screenshot scale).
 import { createRequire } from "node:module";
 import { readFileSync, mkdirSync } from "node:fs";
@@ -18,7 +18,7 @@ const fails = []; const check = (ok, msg) => { console.log((ok ? "  ok   " : "  
 
 const hash = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 const broken = key => (hash(key) % 1000) / 1000 < BROKEN_RATE;
-const calls = { commons: new Map(), aic: [], cma: [] };
+const calls = { commons: new Map(), wikidata: [], aic: [], cma: [] };
 
 // ---------- mocked Commons ----------
 let pid = 1000;
@@ -58,16 +58,30 @@ function commons(url) {
   return { batchcomplete: true, ...(next ? { continue: next } : {}), query: { pages } };
 }
 
+// ---------- mocked Wikidata SPARQL ----------
+function wikidata(url) {
+  const q = new URL(url).searchParams.get("query");
+  const rijks = /Q190804/.test(q); calls.wikidata.push(rijks ? "rijks" : "famous");
+  const bindings = [];
+  for (let i = 0; i < 60; i++) {
+    const qid = (rijks ? 700000 : 800000) + i, name = `${rijks ? "Rijks" : "Master"}_painting_${i}${i % 9 === 0 ? ".tif" : ".jpg"}`;
+    bindings.push({ item: { value: `http://www.wikidata.org/entity/Q${qid}` }, itemLabel: { value: i % 11 === 0 ? `Q${qid}` : i === 3 ? "The Night Watch" : `Painting ${i}` },
+      creatorLabel: { value: rijks ? "Rembrandt" : "Johannes Vermeer" }, image: { value: `http://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(name)}` },
+      year: { value: String(1600 + i) }, links: { value: String(200 - i) } });
+    if (i % 7 === 0) bindings.push({ ...bindings[bindings.length - 1] });   // duplicate row (second image or creator)
+  }
+  return { results: { bindings } };
+}
+
 // ---------- mocked Art Institute of Chicago: kind of record follows the query ----------
 const aicMade = [];
 function aic(url) {
   const p = new URL(url).searchParams, page = +p.get("page"), q = p.get("q");
   calls.aic.push(q);
-  const kind = /pastel/.test(q) ? ["Drawing and Watercolor", "Pastel on paper"]
-    : /hokusai|utamaro|hiroshige/i.test(q) ? ["Print", "Color woodblock print"]
-    : /impression|portrait|figure$|landscape|battle|myth|abstraction|expression/.test(q) ? ["Painting", "Oil on canvas"]
-    : /marble/.test(q) ? ["Sculpture", "Marble"] : ["Drawing and Watercolor", "Red and black chalk on cream laid paper"];
-  const base = (hash(q) % 7) * 37 + (page - 1) * 100;   // different queries overlap partly → de-duplication
+  const KINDS = [["Drawing and Watercolor", "Red and black chalk on cream laid paper"], ["Drawing and Watercolor", "Pastel on paper"], ["Print", "Color woodblock print"], ["Painting", "Oil on canvas"], ["Sculpture", "Marble"]];
+  const ki = /pastel/.test(q) ? 1 : /hokusai|utamaro|hiroshige/i.test(q) ? 2 : /marble/.test(q) ? 4 : /impression|portrait|figure$|landscape|battle|myth|abstraction|expression|oil sketch/.test(q) ? 3 : 0;
+  const kind = KINDS[ki];
+  const base = ki * 20000 + (hash(q) % 7) * 37 + (page - 1) * 100;   // queries of one kind overlap partly → de-duplication
   const data = Array.from({ length: 100 }, (_, k) => {
     const i = base + k, id = 9000 + i;
     const a = { id, title: `Study ${i}`, artist_title: "Jean-Antoine Watteau", artist_display: "Jean-Antoine Watteau\nFrench, 1684–1721",
@@ -129,69 +143,82 @@ await page.route("**/*", route => {
   if (u === "http://localhost:8123/") return route.fulfill({ contentType: "text/html", body: html });
   if (u.startsWith("https://fonts.googleapis.com/")) return route.fulfill({ contentType: "text/css", body: "" });
   if (u.startsWith("https://commons.wikimedia.org/w/api.php")) return json(route, commons(u));
+  if (u.startsWith("https://query.wikidata.org/sparql")) return json(route, wikidata(u));
   if (u.startsWith("https://api.artic.edu/api/v1/artworks/search")) return json(route, aic(u));
   if (u.startsWith("https://openaccess-api.clevelandart.org/api/artworks/")) return json(route, cma(u));
-  if (/^https:\/\/(upload\.wikimedia\.org|www\.artic\.edu\/iiif|openaccess-cdn\.clevelandart\.org)\//.test(u)) {
+  if (/^https:\/\/(upload\.wikimedia\.org|commons\.wikimedia\.org\/wiki\/Special:FilePath|www\.artic\.edu\/iiif|openaccess-cdn\.clevelandart\.org)\//.test(u)) {
     if (/BROKEN_|\/bad-/.test(u)) { imgBad++; return route.fulfill({ status: 404, body: "" }); }
     imgOk++; return route.fulfill({ contentType: "image/jpeg", body: PICS[hash(u) % 3] });
   }
   unknown.push(u); return route.abort();
 });
-const settled = cats => page.waitForFunction(cs => window.schetsklok.sets.filter(s => cs.includes(s.set.cat)).every(s => ["ok", "error", "empty"].includes(s.status)), cats, { timeout: 20000 });
+const settled = cats => page.waitForFunction(cs => window.schetsklok.sets.filter(s => cs.includes(s.set.cat)).every(s => ["ok", "error", "empty"].includes(s.status)), cats, { timeout: 30000 });
 const setsOf = cats => page.evaluate(cs => window.schetsklok.sets.filter(s => cs.includes(s.set.cat)).map(s => ({ name: s.set.name, cat: s.set.cat, source: s.set.source, status: s.status, n: s.items.length, items: s.items })), cats);
+const pressed = () => page.$$eval(".chip[data-cat]", els => els.filter(e => e.getAttribute("aria-pressed") === "true").map(e => e.dataset.cat));
 
 await page.clock.install({ time: new Date("2026-11-12T10:00:00") });
 await page.goto("http://localhost:8123/");
-await settled(["drawing", "engraving"]);
 
-console.log("\n1 · Default categories, filters and licences");
-const info = await setsOf(["drawing", "engraving"]);
+console.log("\n1 · First visit: most of the course is ticked and loads");
+const catKeys = await page.evaluate(() => Object.keys(window.schetsklok.CONFIG.categories));
+let on = await pressed();
+check(on.length === catKeys.length - 3 && !on.includes("colour") && !on.includes("ai") && !on.includes("watercolour"), `${on.length} of ${catKeys.length} categories ticked by default; not landscapes, watercolour, AI`);
+check(on.includes("nude") && on.includes("rijks") && on.includes("famous"), "life drawing, Rijksmuseum and famous paintings are on");
+await settled(on);
+const info = await setsOf(on);
 for (const s of info) check(s.status === "ok" && s.n > 0, `${s.name} (${s.source}): ${s.status}, ${s.n} images`);
-const idle = await page.evaluate(() => window.schetsklok.sets.filter(s => s.status === "idle").length);
-const total = await page.evaluate(() => window.schetsklok.sets.length);
-check(idle === total - info.length, `lazy loading: only the ${info.length} sets of ticked categories loaded, ${idle} of ${total} untouched`);
-const all = info.flatMap(s => s.items);
-check(!all.some(x => /svg|bysa|tif/i.test(x.title + x.url)), "no SVG, no CC BY-SA, no TIFF in the pot");
-check(all.some(x => x.licence === "CC BY 4.0"), "CC BY 4.0 is accepted, with its licence kept for display");
-check(all.every(x => x.title && x.maker && x.year && /^https:\/\//.test(x.link) && x.source && x.licence), "every image has title, maker, year, source link, licence");
-check(all.filter(x => x.source === "Wikimedia Commons").every(x => x.maker === "Gustave Doré"), "HTML in the Commons maker field became plain text");
-const aicIds = new Set(all.filter(x => x.source === "Art Institute of Chicago").map(x => +x.id.slice(1)));
-const aicBad = aicMade.filter(a => aicIds.has(a.id) && (a.artwork_type_title === "Print" || /Landscape/.test(a.title) || !a.image_id || /Graphite/.test(a.medium_display)));
-check(aicBad.length === 0, `AIC filter: no prints, landscapes, imageless or graphite works (${aicIds.size} passed)`);
-const cmaIds = new Set(all.filter(x => x.source === "Cleveland Museum of Art").map(x => +x.id.slice(1)));
-const cmaBad = cmaMade.filter(a => cmaIds.has(a.id) && (a.share_license_status !== "CC0" || !a.images || a.type !== "Drawing"));
-check(cmaIds.size > 0 && cmaBad.length === 0, `Cleveland filter: only CC0 drawings with an image (${cmaIds.size} passed)`);
-check(all.filter(x => x.source === "Cleveland Museum of Art").every(x => x.maker === "Edgar Degas"), "Cleveland maker without the nationality/dates suffix");
-const only = t => all.filter(x => x.title.endsWith(" of " + t)).length;
-const keptFromSub1 = Object.keys(commonsMade).filter(t => /\/sub1$/.test(t)).map(only);
-check(keptFromSub1.every(n => n <= 1), `small subcategory (4 scans) yields at most 1 image: ${keptFromSub1.join(",")}`);
-const sub2 = Object.keys(commonsMade).filter(t => /\/sub2$/.test(t)).map(only);
-check(sub2.some(n => n > 1), `larger subcategory (10) stays whole: ${sub2.join(",")}`);
+const idle = await page.evaluate(() => window.schetsklok.sets.filter(s => s.status === "idle").map(s => s.set.cat));
+check(idle.length > 0 && idle.every(c => ["colour", "watercolour", "ai"].includes(c)), `lazy loading: only sets of unticked categories untouched (${idle.length})`);
+check(await page.isEnabled("#startBtn"), "start button enabled once enough has arrived");
 await page.screenshot({ path: join(out, "1-settings.png"), fullPage: true });
 
-console.log("\n2 · Ticking more categories loads them; soft style filter");
-for (const k of ["pastel", "impressionism", "abstraction", "anatomy"]) await page.click(`.cat[data-cat="${k}"] input`);
-await settled(["pastel", "impressionism", "abstraction", "anatomy"]);
-const more = await setsOf(["pastel", "impressionism", "abstraction", "anatomy"]);
-for (const s of more) check(s.status === "ok" && s.n > 0, `${s.name} (${s.source}): ${s.status}, ${s.n} images`);
-const blanks = more.filter(s => s.cat === "anatomy").flatMap(s => s.items.filter(x => /blank/i.test(x.title)).map(x => `${s.name}: ${x.title}`));
-check(!blanks.length, `anatomy sets drop blank folios and front matter${blanks.length ? ": " + blanks.slice(0, 3).join(" | ") : ""}`);
-const byName = n => more.find(s => s.name === n).items.map(x => +x.id.slice(1));
-const imprIds = byName("Impressionism (AIC)");
-check(imprIds.every(id => aicMade.find(a => a.id === id && a.style_titles.includes("Impressionism"))), `style filter used when enough works match (${imprIds.length} Impressionism-tagged)`);
-check(byName("Abstraction (AIC)").length > 12, "style filter falls back when nothing is tagged (abstraction still has images)");
+console.log("\n2 · Filters, licences, complexity");
+const all = info.flatMap(s => s.items);
+check(!all.some(x => /svg|bysa|\btif\b/i.test(x.title + x.url)), "no SVG, no CC BY-SA, no TIFF in the pot");
+check(all.some(x => x.licence === "CC BY 4.0"), "CC BY 4.0 is accepted, with its licence kept for display");
+check(all.every(x => x.title && x.maker && x.year && /^https:\/\//.test(x.link) && x.source && x.licence && typeof x.d === "number"), "every image has title, maker, year, source link, licence, complexity");
+check(all.filter(x => x.source === "Wikimedia Commons" && x.id[0] === "c").every(x => x.maker === "Gustave Doré"), "HTML in the Commons maker field became plain text");
+const anat = info.filter(s => s.cat === "anatomy").flatMap(s => s.items.filter(x => /blank/i.test(x.title)));
+check(!anat.length, "Commons sets drop blank folios and front matter");
+const aicIds = new Set(all.filter(x => x.source === "Art Institute of Chicago").map(x => +x.id.slice(1)));
+const aicBad = aicMade.filter(a => aicIds.has(a.id) && !a.image_id);
+check(aicBad.length === 0 && aicIds.size > 100, `AIC: no imageless works (${aicIds.size} passed)`);
+const drawingSets = info.filter(s => s.cat === "drawing" && s.source === "aic").flatMap(s => s.items.map(x => +x.id.slice(1)));
+const drawingBad = aicMade.filter(a => drawingSets.includes(a.id) && (a.artwork_type_title === "Print" || /Landscape/.test(a.title) || /Graphite/.test(a.medium_display)));
+check(drawingBad.length === 0, `AIC figure studies: no prints, landscapes or graphite works${drawingBad.length ? " — " + drawingBad.slice(0, 3).map(a => `${a.id} ${a.artwork_type_title} / ${a.title} / ${a.medium_display}`).join(" | ") : ""}`);
+const cmaIds = new Set(all.filter(x => x.source === "Cleveland Museum of Art").map(x => +x.id.slice(1)));
+const cmaBad = cmaMade.filter(a => cmaIds.has(a.id) && (a.share_license_status !== "CC0" || !a.images));
+check(cmaIds.size > 0 && cmaBad.length === 0, `Cleveland: only CC0 works with an image (${cmaIds.size} passed)`);
+check(all.filter(x => x.source === "Cleveland Museum of Art").every(x => x.maker === "Edgar Degas"), "Cleveland maker without the nationality/dates suffix");
 check(calls.cma.some(c => /^pastel\|Drawing$/.test(c)), "Cleveland type filter sent to the server");
-const folders = await page.evaluate(() => ["Schetsen", "Gravures", "Handen n1", "AI", "Pastel", "Etsen", "Anatomie", "Krijttekeningen", "Beeldhouwwerk"].map(window.schetsklok.catForFolder));
-check(folders.join() === "drawing,engraving,hands,ai,pastel,engraving,anatomy,drawing,sculpture", `own folders land in the right category: ${folders.join(", ")}`);
-await page.screenshot({ path: join(out, "2-more-categories.png"), fullPage: true });
-for (const k of ["pastel", "impressionism", "abstraction", "anatomy"]) await page.click(`.cat[data-cat="${k}"] input`);   // back to Engraving + Drawing
+const wd = info.filter(s => s.source === "wikidata");
+check(wd.length === 2 && wd.every(s => s.n === 48), `Wikidata: duplicates and TIFFs and label-less items dropped (${wd.map(s => s.n).join(", ")} of 60)`);
+const rijksItems = wd.find(s => s.cat === "rijks").items;
+check(rijksItems.every(x => x.source === "Rijksmuseum · via Wikimedia" && /Special:FilePath\/.*width=1280/.test(x.url) && /commons\.wikimedia\.org\/wiki\/File:/.test(x.link)), "Rijksmuseum items: source label, 1280-wide Commons image, link to the file page");
+const nw = rijksItems.find(x => x.title === "The Night Watch");
+check(nw && nw.d === 3, `famous crowded scene scores 3 (Night Watch: ${nw && nw.d})`);
+const cx = await page.evaluate(() => { const c = window.schetsklok.complexity; return [c(2, "Study for a figure", "black chalk"), c(2, "Portrait of a man", "oil on canvas"), c(1, "Battle of Anghiari", "pen and ink"), c(3, "Plate 9", "")]; });
+check(cx.join() === "1.2,2.2,1.3,3", `complexity nudges: study+chalk 1.2 · oil 2.2 · battle+ink 1.3 · engraving 3 (${cx.join(", ")})`);
+const only = t => all.filter(x => x.title.endsWith(" of " + t)).length;
+const keptFromSub1 = Object.keys(commonsMade).filter(t => /\/sub1$/.test(t)).map(only);
+check(keptFromSub1.every(n => n <= 1), `small subcategory (4 scans) yields at most 1 image: ${keptFromSub1.slice(0, 6).join(",")}…`);
+const sub2 = Object.keys(commonsMade).filter(t => /\/sub2$/.test(t)).map(only);
+check(sub2.some(n => n > 1), `larger subcategory (10) stays whole: ${sub2.slice(0, 6).join(",")}…`);
+const imprIds = info.find(s => s.name === "Impressionism (AIC)").items.map(x => +x.id.slice(1));
+check(imprIds.every(id => aicMade.find(a => a.id === id && a.style_titles.includes("Impressionism"))), `style filter used when enough works match (${imprIds.length} Impressionism-tagged)`);
+check(info.find(s => s.name === "Abstraction (AIC)").n > 12, "style filter falls back when nothing is tagged (abstraction still has images)");
+const folders = await page.evaluate(() => ["Schetsen", "Gravures", "Handen n1", "AI", "Pastel", "Etsen", "Anatomie", "Krijttekeningen", "Beeldhouwwerk", "Rijksmuseum", "Voorstudies"].map(window.schetsklok.catForFolder));
+check(folders.join() === "drawing,engraving,hands,ai,pastel,engraving,anatomy,drawing,sculpture,rijks,studies", `own folders land in the right category: ${folders.join(", ")}`);
 
-console.log("\n3 · Build-up · 30 min with Engraving + Drawing");
-const cats = await page.$$eval(".cat", els => els.filter(e => e.querySelector("input").checked).map(e => e.dataset.cat));
-check(cats.sort().join() === "drawing,engraving", `only Engraving and Drawing ticked (${cats.join(", ")})`);
+console.log("\n3 · Build-up with Engraving + Drawing only, full screen");
+for (const k of on) if (k !== "drawing" && k !== "engraving") await page.click(`.chip[data-cat="${k}"]`);
+on = await pressed();
+check(on.sort().join() === "drawing,engraving", `only Engraving and Drawing ticked (${on.join(", ")})`);
 await page.click('[data-plan="buildup"]');
 check(await page.isEnabled("#startBtn"), "start button enabled");
 await page.click("#startBtn");
+await page.waitForFunction(() => window.schetsklok.session()?.ready);
+check(await page.evaluate(() => !!document.fullscreenElement), "session runs in full screen");
 const badBefore = imgBad;
 let shot = false, breaks = 0, overlayWhileReady = 0;
 for (let k = 0; k < 4000; k++) {
@@ -213,11 +240,12 @@ if (badInSession) check(S.swaps >= badInSession, `every broken image was replace
 else console.log("  info no broken image hit in this session; the stress run (BROKEN=0.6) covers swapping");
 check(breaks === 3, `3 breaks between blocks (${breaks})`);
 check(overlayWhileReady === 0, "loading screen never visible while a pose was running");
-const lv = S.slots.map(s => s.d).join("");
-check(/^1{12}3{3}$/.test(lv), `30 s and 1 min = drawing (n1), 3 and 10 min = engraving (n3): ${lv}`);
+const lv = S.slots.map(s => Math.round(s.d)).join("");
+check(/^1{12}3{3}$/.test(lv), `30 s and 1 min = drawing (~1), 3 and 10 min = engraving (3): ${lv}`);
+await page.click("#back");
+check(await page.waitForFunction(() => !document.fullscreenElement, null, { timeout: 3000 }).then(() => true, () => false), "stop leaves full screen");
 
 console.log("\n4 · Review");
-await page.click("#back");
 await page.click("#keur summary");
 const bible = await page.evaluate(() => window.schetsklok.sets.findIndex(s => s.set.name === "Doré · Bible"));
 await page.click(`[data-set="${bible}"]`);
@@ -230,23 +258,25 @@ await page.click("#copyVerdict");
 const clip = await page.evaluate(() => navigator.clipboard.readText().catch(() => document.getElementById("verdictOut").value));
 check(/Doré · Bible .*20 reviewed, 1 rejected/.test(clip) && /✕ /.test(clip) && /not loaded/.test(clip), "verdict names the set, 20 reviewed, 1 rejected, and which sets were not loaded");
 await page.screenshot({ path: join(out, "4-review.png"), fullPage: true });
-check(await page.evaluate(() => JSON.parse(localStorage.getItem("sk2:rejected")).length) === 1, "rejection stored on the device");
+check(await page.evaluate(() => JSON.parse(localStorage.getItem("sk3:rejected")).length) === 1, "rejection stored on the device");
 
 console.log("\n5 · Reload: choices remembered, results from the cache");
-await page.click('[data-plan="thumbs"]');
-await page.click('.cat[data-cat="hands"] input');
+await page.click('[data-plan="sketch"]');
+await page.click('.chip[data-cat="hands"]');
 await settled(["hands"]);
-const callsBefore = [...calls.commons.values()].reduce((a, b) => a + b, 0) + calls.aic.length + calls.cma.length;
+const total = () => [...calls.commons.values()].reduce((a, b) => a + b, 0) + calls.wikidata.length + calls.aic.length + calls.cma.length;
+const callsBefore = total();
 await page.reload();
 await settled(["drawing", "engraving", "hands"]);
-const after = await page.evaluate(() => ({ plan: document.querySelector(".plan[aria-pressed=true]").dataset.plan, cats: [...document.querySelectorAll(".cat input:checked")].map(i => i.closest(".cat").dataset.cat).sort() }));
-check(after.plan === "thumbs" && after.cats.join() === "drawing,engraving,hands", `plan and categories remembered (${after.plan}; ${after.cats.join(", ")})`);
-check([...calls.commons.values()].reduce((a, b) => a + b, 0) + calls.aic.length + calls.cma.length === callsBefore, "second visit: no new API calls");
+const after = { plan: await page.$eval(".chip[data-plan][aria-pressed=true]", e => e.dataset.plan), cats: (await pressed()).sort() };
+check(after.plan === "sketch" && after.cats.join() === "drawing,engraving,hands", `plan and categories remembered (${after.plan}; ${after.cats.join(", ")})`);
+check(total() === callsBefore, "second visit: no new API calls");
+check(await page.$eval("#planInfo", e => e.textContent).then(t => /6×1m · 3×3m · 2×5m · 1×20m/.test(t)), "plan breakdown shown under the chips");
 
 console.log(`\nconsole errors: ${errors.length}${errors.length ? "\n  " + errors.join("\n  ") : ""}`);
 console.log(`deliberately broken images (404 in console, expected): ${expected404.length}`);
 check(errors.length === 0, "0 console errors (apart from the deliberate 404s)");
-check(unknown.length === 0, `no unexpected network requests${unknown.length ? ": " + unknown.join(", ") : ""}`);
+check(unknown.length === 0, `no unexpected network requests${unknown.length ? ": " + unknown.slice(0, 3).join(", ") : ""}`);
 console.log(`\n${fails.length ? fails.length + " FAILED" : "ALL GREEN"} · images loaded ${imgOk}, refused ${imgBad} · screenshots in ${out}`);
 await browser.close();
 process.exit(fails.length ? 1 : 0);
