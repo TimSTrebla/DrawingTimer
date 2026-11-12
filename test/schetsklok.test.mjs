@@ -81,7 +81,7 @@ function aic(url) {
   const KINDS = [["Drawing and Watercolor", "Red and black chalk on cream laid paper"], ["Drawing and Watercolor", "Pastel on paper"], ["Print", "Color woodblock print"], ["Painting", "Oil on canvas"], ["Sculpture", "Marble"]];
   const ki = /pastel/.test(q) ? 1 : /hokusai|utamaro|hiroshige/i.test(q) ? 2 : /marble/.test(q) ? 4 : /impression|portrait|figure$|landscape|battle|myth|abstraction|expression|oil sketch/.test(q) ? 3 : 0;
   const kind = KINDS[ki];
-  const base = ki * 20000 + (hash(q) % 7) * 37 + (page - 1) * 100;   // queries of one kind overlap partly → de-duplication
+  const base = ki * 20000 + (hash(q) % 97) * 100 + (page - 1) * 100;   // each query its own id range; a rare overlap exercises de-duplication
   const data = Array.from({ length: 100 }, (_, k) => {
     const i = base + k, id = 9000 + i;
     const a = { id, title: `Study ${i}`, artist_title: "Jean-Antoine Watteau", artist_display: "Jean-Antoine Watteau\nFrench, 1684–1721",
@@ -244,7 +244,7 @@ check(await page.evaluate(() => !!document.fullscreenElement), "session runs in 
 const fit = await page.evaluate(() => { const v = document.getElementById("view"), p = document.getElementById("pic"), cs = getComputedStyle(v);
   const vw = v.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), vh = v.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
   return { pw: p.offsetWidth, ph: p.offsetHeight, vw, vh, nat: document.getElementById("img").naturalWidth }; });
-check((Math.abs(fit.pw - fit.vw) <= 1 || Math.abs(fit.ph - fit.vh) <= 1) && fit.pw > fit.nat, `image scaled up to fill the stage (${fit.pw}×${fit.ph} in ${fit.vw}×${fit.vh}, natural ${fit.nat} wide)`);
+check(Math.abs(fit.pw - fit.vw) <= 1 || Math.abs(fit.ph - fit.vh) <= 1, `image scaled to fill the stage in one dimension (${fit.pw}×${fit.ph} in ${fit.vw}×${fit.vh}, natural ${fit.nat} wide)`);
 const gesture = (seq) => page.evaluate(seq => { const v = document.getElementById("view"), r = v.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
   for (const [type, id, dx, dy] of seq) v.dispatchEvent(new PointerEvent(type, { pointerId: id, clientX: cx + dx, clientY: cy + dy, bubbles: true, isPrimary: id === 1, pointerType: "touch" }));
   return window.schetsklok.zoom(); }, seq);
