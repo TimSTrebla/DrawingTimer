@@ -17,6 +17,8 @@ zoom into it, and the zoom resets with the next image.
 
 Nothing is ticked on a first visit: you choose, and the device remembers it.
 Sessions: Gesture · Build-up · Class · Sketch to finish · Thumbnails · Long study · Master copy · Free.
+**Shortest pose** (30 s · 1 min · 2 min · 5 min, default 2 min) lifts every block shorter than it and merges them, so
+Class at 2 min runs 15×2m · 3×5m · 2×10m · 1×15m: copying a master is not life drawing.
 Keys: space pause · ← → previous/next · G greyscale · F mirror · R grid · Esc stop. Choices are remembered on the device.
 
 ## Time follows complexity

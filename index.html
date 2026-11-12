@@ -130,6 +130,7 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
           <option>1</option><option>3</option><option>5</option><option selected>10</option><option>20</option><option>40</option>
         </select>
       </div></div></div>
+    <div class="group"><span class="lbl">Shortest pose</span><div class="chips" id="paces"></div></div>
     <div class="group"><span class="lbl">Options</span><div class="opts">
       <label><input type="checkbox" id="optGray"> greyscale</label>
       <label><input type="checkbox" id="optBreak" checked> break between blocks</label>
@@ -161,7 +162,7 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
     </details>
     <details>
       <summary>About</summary>
-      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Only the sets of chosen categories are loaded; results are kept on this device for three days. Each image gets a complexity score (1–3) from its set, medium and title; the shortest poses get the simplest images. Pinch, double-tap or scroll to zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Esc stop.</p>
+      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Only the sets of chosen categories are loaded; results are kept on this device for three days. Each image gets a complexity score (1–3) from its set, medium and title; the shortest poses get the simplest images. <b>Shortest pose</b> lifts every block shorter than it, so a class can start at two minutes instead of thirty seconds. Pinch, double-tap or scroll to zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Esc stop.</p>
     </details>
   </div>
 </div>
@@ -550,24 +551,28 @@ const sessionPool = () => pool().filter(p => selected.has(p.ck) && !p.bad);
 
 /* ---------- Session plans ---------- */
 const PLANS = [
-  {id:"gesture", t:"Gesture", s:"20 × 30 s", h:"Line of action only.", seg:[[30,20]]},
-  {id:"buildup", t:"Build-up", s:"8×30s · 4×1m · 2×3m · 1×10m", h:"From gesture to a short study.", seg:[[30,8],[60,4],[180,2],[600,1]]},
-  {id:"class",   t:"Class", s:"10×30s · 5×1m · 3×5m · 2×10m · 1×15m", h:"A full life-drawing class.", seg:[[30,10],[60,5],[300,3],[600,2],[900,1]]},
-  {id:"sketch",  t:"Sketch to finish", s:"6×1m · 3×3m · 2×5m · 1×20m", h:"Sketches first, the finished work last.", seg:[[60,6],[180,3],[300,2],[1200,1]]},
-  {id:"thumbs",  t:"Thumbnails", s:"12 × 2 min", h:"Small value sketches: masses and composition.", seg:[[120,12]]},
-  {id:"study",   t:"Long study", s:"3 × 20 min", h:"Structure, then value.", seg:[[1200,3]]},
-  {id:"copy",    t:"Master copy", s:"1 × 45 min", h:"One work, copied as faithfully as you can.", seg:[[2700,1]]},
-  {id:"free",    t:"Free", s:"", h:"", seg:null},
+  {id:"gesture", t:"Gesture", h:"Line of action only.", seg:[[30,20]]},
+  {id:"buildup", t:"Build-up", h:"From gesture to a short study.", seg:[[30,8],[60,4],[180,2],[600,1]]},
+  {id:"class",   t:"Class", h:"A full life-drawing class.", seg:[[30,10],[60,5],[300,3],[600,2],[900,1]]},
+  {id:"sketch",  t:"Sketch to finish", h:"Sketches first, the finished work last.", seg:[[60,6],[180,3],[300,2],[1200,1]]},
+  {id:"thumbs",  t:"Thumbnails", h:"Small value sketches: masses and composition.", seg:[[120,12]]},
+  {id:"study",   t:"Long study", h:"Structure, then value.", seg:[[1200,3]]},
+  {id:"copy",    t:"Master copy", h:"One work, copied as faithfully as you can.", seg:[[2700,1]]},
+  {id:"free",    t:"Free", h:"your choice", seg:null},
 ];
-let planId = PLANS.some(p => p.id === prefs.plan) ? prefs.plan : "buildup";
+// Shortest pose: blocks shorter than this are lifted to it and merged; copying a master is not life drawing.
+const PACES = [30, 60, 120, 300];
+let planId = PLANS.some(p => p.id === prefs.plan) ? prefs.plan : "buildup", minPose = PACES.includes(prefs.minPose) ? prefs.minPose : 120;
+function floored(seg){ const out = []; for (const [d, n] of seg){ const dd = Math.max(d, minPose), l = out[out.length - 1]; if (l && l[0] === dd) l[1] += n; else out.push([dd, n]); } return out; }
 const fmt = s => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return h ? `${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}` : `${m}:${String(x).padStart(2,"0")}`; };
 const fmtL = s => s < 60 ? `${s} s` : s % 60 ? `${Math.floor(s/60)}m${s%60}s` : `${s/60} min`;
 const fmtMin = s => s < 60 ? `${s} s` : `${Math.round(s/60)} min`;
-const segments = () => planId === "free" ? [[+$("freeDur").value, +$("freeCount").value]] : PLANS.find(p => p.id === planId).seg;
-const planTotal = p => p.seg ? p.seg.reduce((a,[d,n]) => a + d*n, 0) : 0;
+const segments = () => planId === "free" ? [[+$("freeDur").value, +$("freeCount").value]] : floored(PLANS.find(p => p.id === planId).seg);
+const planTotal = p => p.seg ? floored(p.seg).reduce((a,[d,n]) => a + d*n, 0) : 0;
+const fmtSeg = segs => segs.map(([d, n]) => `${n}×${d < 60 ? d + "s" : d % 60 ? Math.floor(d/60) + "m" + d % 60 + "s" : d/60 + "m"}`).join(" · ");
 
 function savePrefs(){
-  store.set("sk3:prefs", {selected:[...selected].filter(k => !k.startsWith("folder:")), plan:planId,
+  store.set("sk3:prefs", {selected:[...selected].filter(k => !k.startsWith("folder:")), plan:planId, minPose,
     gray:$("optGray").checked, brk:$("optBreak").checked, sound:$("optSound").checked});
 }
 function renderPlans(){
@@ -579,8 +584,14 @@ function renderPlans(){
     $("plans").appendChild(b);
   }
   const p = PLANS.find(x => x.id === planId);
-  $("planInfo").textContent = [p.s, p.h].filter(Boolean).join(" · ");
+  $("planInfo").textContent = [p.seg ? fmtSeg(floored(p.seg)) : "", p.h].filter(Boolean).join(" · ");
   $("free").classList.toggle("on", planId === "free");
+  $("paces").innerHTML = "";
+  for (const d of PACES){
+    const b = document.createElement("button"); b.className = "chip"; b.dataset.pace = d; b.setAttribute("aria-pressed", d === minPose); b.textContent = fmtMin(d);
+    b.onclick = () => { minPose = d; renderPlans(); updateSum(); savePrefs(); };
+    $("paces").appendChild(b);
+  }
 }
 
 /* ---------- Settings view ---------- */

@@ -221,6 +221,11 @@ for (const k of on) if (k !== "drawing" && k !== "engraving") await page.click(`
 on = await pressed();
 check(on.sort().join() === "drawing,engraving", `only Engraving and Drawing ticked (${on.join(", ")})`);
 await page.click('[data-plan="buildup"]');
+check(await page.$eval('.chip[data-pace="120"]', e => e.getAttribute("aria-pressed")) === "true", "shortest pose is 2 min by default");
+check(/^12×2m · 2×3m · 1×10m · /.test(await page.$eval("#planInfo", e => e.textContent)) && await page.$eval('.chip[data-plan="buildup"] small', e => e.textContent) === "40 min", "Build-up at 2 min: 12×2m · 2×3m · 1×10m = 40 min, short blocks merged");
+check(await page.$eval('.chip[data-plan="class"] small', e => e.textContent) === "80 min", "Class at 2 min: 80 min");
+await page.click('.chip[data-pace="30"]');
+check(/^8×30s · 4×1m · 2×3m · 1×10m · /.test(await page.$eval("#planInfo", e => e.textContent)), "at 30 s the plan is as written");
 check(await page.isEnabled("#startBtn"), "start button enabled");
 await page.click("#startBtn");
 await page.waitForFunction(() => window.schetsklok.session()?.ready);
@@ -285,7 +290,7 @@ await page.screenshot({ path: join(out, "4-review.png"), fullPage: true });
 check(await page.evaluate(() => JSON.parse(localStorage.getItem("sk3:rejected")).length) === 1, "rejection stored on the device");
 
 console.log("\n5 · Reload: choices remembered, results from the cache");
-await page.click('[data-plan="sketch"]');
+await page.click('[data-plan="sketch"]'); await page.click('.chip[data-pace="60"]');
 await page.click('.chip[data-cat="hands"]');
 await settled(["hands"]);
 const total = () => [...calls.commons.values()].reduce((a, b) => a + b, 0) + calls.wikidata.length + calls.aic.length + calls.cma.length;
@@ -294,8 +299,9 @@ await page.reload();
 await settled(["drawing", "engraving", "hands"]);
 const after = { plan: await page.$eval(".chip[data-plan][aria-pressed=true]", e => e.dataset.plan), cats: (await pressed()).sort() };
 check(after.plan === "sketch" && after.cats.join() === "drawing,engraving,hands", `plan and categories remembered (${after.plan}; ${after.cats.join(", ")})`);
+check(await page.$eval('.chip[data-pace="60"]', e => e.getAttribute("aria-pressed")) === "true", "shortest pose remembered (1 min)");
 check(total() === callsBefore, "second visit: no new API calls");
-check(await page.$eval("#planInfo", e => e.textContent).then(t => /6×1m · 3×3m · 2×5m · 1×20m/.test(t)), "plan breakdown shown under the chips");
+check(await page.$eval("#planInfo", e => e.textContent).then(t => /^6×1m · 3×3m · 2×5m · 1×20m/.test(t)), "plan breakdown shown under the chips");
 
 console.log(`\nconsole errors: ${errors.length}${errors.length ? "\n  " + errors.join("\n  ") : ""}`);
 console.log(`deliberately broken images (404 in console, expected): ${expected404.length}`);
