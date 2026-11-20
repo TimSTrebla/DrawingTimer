@@ -1,0 +1,44 @@
+name: Review sources
+
+# Research tool, run by hand. Publishes its output to the `review` branch (replaced on every run):
+#   discover  searches Wikimedia Commons for categories and scanned books by keyword (tools/review.json)
+#   sheets    contact sheets of candidate sets and existing sets, to judge by eye
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "discover or sheets"
+        type: choice
+        options: [sheets, discover]
+        default: sheets
+
+permissions:
+  contents: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright with Chromium
+        if: inputs.mode == 'sheets'
+        run: |
+          npm init -y > /dev/null
+          npm install --no-save playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Run the review
+        run: node tools/review.mjs ${{ inputs.mode }}
+      - name: Publish to the review branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          cd out
+          git init -q -b review
+          git config user.name "review"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Review $(date -u '+%F %H:%M') (${{ inputs.mode }})"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" review

@@ -1,0 +1,24 @@
+{
+  "searches": [
+    "Bargue", "Cours de dessin", "drawing course", "drawing books", "drawing book plates", "drawing manuals", "drawing lessons", "drawing instruction",
+    "art instruction books", "how to draw", "drawing models lithographs", "modèles de dessin", "Zeichenschule", "Zeichenbuch", "Zeichenvorlagen", "tekenboek", "tekenvoorbeelden",
+    "Bernard-Romain Julien", "Julien études lithographies", "Bloemaert tekenboek", "Crispijn van de Passe teken", "Fialetti", "Encyclopédie dessein", "Encyclopédie planches dessin",
+    "Preissler", "Le Brun expressions passions", "Bridgman", "Vanderpoel", "Richer anatomie artistique", "Salvage anatomie gladiateur", "Rimmer art anatomy",
+    "anatomy for artists", "artistic anatomy", "écorché", "Jamnitzer Perspectiva", "Vredeman de Vries perspective", "perspective drawing books", "geometric solids drawings",
+    "human proportions", "proportions of the human body drawings", "Vier Bücher von menschlicher Proportion", "Jean Cousin pourtraiture", "Cambiaso drawings",
+    "drawings of plaster casts", "drawings after antique sculpture", "academic drawings", "académies drawings", "academy figures", "life drawings academy",
+    "Lairesse teekenkonst", "Ruskin Elements of Drawing", "Walter Crane Line and Form", "Piazzetta studi", "Ribera etchings", "Guercino drawing book", "Stefano della Bella drawing book",
+    "drawings of eyes", "drawings of ears", "drawings of noses", "drawings of mouths", "drawings of feet", "studies of eyes prints", "head studies prints", "Lutz drawing",
+    "Harding lessons", "copybooks drawing", "lithographs after drawings study", "Camper", "Hogarth Analysis of Beauty", "Leonardo Trattato della pittura illustrations", "Villard de Honnecourt"
+  ],
+  "books": [
+    "Bargue cours de dessin", "Bargue drawing course", "Bridgman constructive anatomy", "Bridgman life drawing", "Bridgman hundred hands", "Vanderpoel human figure",
+    "Richer anatomie artistique", "Rimmer art anatomy", "Ruskin elements of drawing", "Crane line and form", "Cassagne dessin", "Julien cours de dessin",
+    "Preissler Practic", "Lairesse teekenkonst", "drawing book", "tekenboek", "teekenboek", "Zeichenschule", "méthode pour apprendre le dessin", "Jombert dessein",
+    "Cousin pourtraiture", "Marshall anatomy for artists", "Thomson anatomy art students", "Fau anatomie artistes", "Duval anatomie artistes", "Hatton figure drawing",
+    "Lutz what to draw", "Lutz drawing made easy", "Augsburg drawing", "drawing for beginners", "freehand drawing", "pencil drawing lessons", "figure drawing",
+    "Harding lessons on art", "Hogarth analysis of beauty", "perspective pratique", "Dürer menschlicher Proportion", "light and shade drawing", "art anatomy", "cast drawing"
+  ],
+  "candidates": [],
+  "existing": ""
+}

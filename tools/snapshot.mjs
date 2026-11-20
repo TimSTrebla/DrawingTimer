@@ -16,7 +16,7 @@ await page.route("http://localhost:8123/", r => r.fulfill({ contentType: "text/h
 await page.route("http://localhost:8123/sets.json", r => r.fulfill({ status: 404, body: "" }));   // start from nothing, not from the old snapshot
 // The Art Institute's API refused the page's own requests ("Failed to fetch": no CORS answer). Here, outside a
 // browser, Node fetches it and hands the JSON to the page, identifying this tool the way the API's docs ask.
-const AIC_ID = "Schetsklok snapshot (https://github.com/TimSTrebla/DrawingTimer)";
+const AIC_ID = "drawing-reference-snapshot/1.0 (automated, weekly, low volume)";   // a generic client name: no account or project details leave the repo
 await page.route("https://api.artic.edu/**", async r => {
   try {
     const res = await fetch(r.request().url(), { headers: { "User-Agent": AIC_ID, "AIC-User-Agent": AIC_ID, "Accept": "application/json" } });

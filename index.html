@@ -958,7 +958,9 @@ if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
 // For tests, the snapshot tool and the curious.
 const VERSION = "2026-11-20c"; $("version").textContent = VERSION;
-window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, keyOf: cacheKey, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
+window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, keyOf: cacheKey, session: () => S,
+  probe: async set => (await LOADERS[set.source](set)).map(o => ({...o, d: complexity(set.level || 1, o.title, o.medium || "")})),   // one set, fetched live, nothing stored (tools/review.mjs)
+  catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
 
 renderPlans(); refresh();
 seedFromSnapshot().then(loadSelected);
