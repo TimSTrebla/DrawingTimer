@@ -213,7 +213,7 @@ const sub2 = Object.keys(commonsMade).filter(t => /\/sub2$/.test(t)).map(only);
 check(sub2.some(n => n > 1), `larger subcategory (10) stays whole: ${sub2.slice(0, 6).join(",")}…`);
 const imprIds = info.find(s => s.name === "Impressionism (AIC)").items.map(x => +x.id.slice(1));
 check(imprIds.every(id => aicMade.find(a => a.id === id && a.style_titles.includes("Impressionism"))), `style filter used when enough works match (${imprIds.length} Impressionism-tagged)`);
-check(info.find(s => s.name === "Abstraction (AIC)").n > 12, "style filter falls back when nothing is tagged (abstraction still has images)");
+check(info.find(s => s.name === "Post-Impressionism (AIC)").n > 12, "style filter falls back when nothing is tagged (post-impressionism still has images)");
 const folders = await page.evaluate(() => ["Schetsen", "Gravures", "Handen n1", "AI", "Pastel", "Etsen", "Anatomie", "Krijttekeningen", "Beeldhouwwerk", "Rijksmuseum", "Voorstudies"].map(window.schetsklok.catForFolder));
 check(folders.join() === "drawing,engraving,hands,ai,pastel,engraving,anatomy,drawing,sculpture,rijks,studies", `own folders land in the right category: ${folders.join(", ")}`);
 

@@ -34,6 +34,12 @@ const bad = rows.filter(r => r.status !== "ok");
 console.log(`\n${rows.length - bad.length} of ${rows.length} sets ok, ${rows.reduce((a, r) => a + r.n, 0)} images` + (bad.length ? `; not in the snapshot: ${bad.map(r => r.name).join(", ")}` : ""));
 
 const snap = await page.evaluate(() => window.schetsklok.snapshot());
+// A set that failed this time keeps the previous snapshot's entry, as long as its definition is unchanged.
+let old = null; try { old = JSON.parse(readFileSync(outFile, "utf8")); } catch {}
+const keys = await page.evaluate(() => Object.fromEntries(window.schetsklok.sets.map(s => [s.set.name, window.schetsklok.keyOf(s.set)])));
+for (const r of rows) if (r.status !== "ok" && old && old.sets && old.sets[r.name] && old.sets[r.name].k === keys[r.name]) {
+  snap.sets[r.name] = old.sets[r.name]; console.log(`kept    ${String(old.sets[r.name].items.length).padStart(4)}  ${r.name} — from the previous snapshot`);
+}
 await browser.close();
 if (Object.keys(snap.sets).length < rows.length / 2) { console.error("fewer than half the sets loaded; keeping the old snapshot"); process.exit(1); }
 writeFileSync(outFile, JSON.stringify(snap));

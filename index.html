@@ -336,10 +336,8 @@ const CONFIG = {
     {cat:"impressionism", name:"Impressionism (Cleveland)",source:"cma",   query:"impressionism", type:"Painting", level:2},
     {cat:"expressionism", name:"Schiele · drawings",     source:"commons", query:"Category:Drawings by Egon Schiele", level:2, calls:12},
     {cat:"expressionism", name:"Expressionism (AIC)",    source:"aic",     query:"expressionism", type:"painting|print|drawing", style:"expression", level:2},
-    {cat:"expressionism", name:"Expressionism (Cleveland)",source:"cma",   query:"expressionism", level:2},
     {cat:"abstraction", name:"Kandinsky · abstract",     source:"commons", query:"Category:Abstract paintings by Wassily Kandinsky", level:2, calls:12},
     {cat:"abstraction", name:"af Klint · Paintings for the Temple", source:"commons", query:"Category:The Paintings for the Temple (Hilma af Klint)", level:2},
-    {cat:"abstraction", name:"Abstraction (AIC)",        source:"aic",     query:"abstract", type:"painting", style:"abstract|cubis|futuris|suprematis|de stijl|neo-plastic", level:2},
   ],
   maxPerSet: 120,   // more is not needed and keeps loading fast
   commonsCalls: 8,  // default max API calls per Commons set; each subcategory costs one
@@ -959,8 +957,8 @@ if (prefs.brk != null) $("optBreak").checked = prefs.brk;
 if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
 // For tests, the snapshot tool and the curious.
-const VERSION = "2026-11-20b"; $("version").textContent = VERSION;
-window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
+const VERSION = "2026-11-20c"; $("version").textContent = VERSION;
+window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, keyOf: cacheKey, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
 
 renderPlans(); refresh();
 seedFromSnapshot().then(loadSelected);
