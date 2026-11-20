@@ -17,10 +17,14 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "
 async function commons(params) {
   const u = "https://commons.wikimedia.org/w/api.php?" + new URLSearchParams({ action: "query", format: "json", formatversion: "2", ...params });
   for (let k = 0; ; k++) {
-    try { const r = await fetch(u, { headers: { "User-Agent": UA } }); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
-    catch (e) { if (k >= 2) throw e; await sleep(1500 * (k + 1)); }
+    try {
+      const r = await fetch(u, { headers: { "User-Agent": UA } });
+      if (r.status === 429 && k < 5) { await sleep(1000 * Math.min(120, +(r.headers.get("retry-after") || 0) || 30 * (k + 1))); continue; }   // the search API is rate-limited: wait as told
+      if (!r.ok) throw new Error("HTTP " + r.status); return await r.json();
+    } catch (e) { if (k >= 2) throw e; await sleep(1500 * (k + 1)); }
   }
 }
+const PACE = 3500;   // ms between searches; faster than this and Commons answers 429
 
 async function discover() {
   const lines = [`# Commons discovery · ${new Date().toISOString().slice(0, 16)}`, "", "Categories by keyword: files · subcategories · title, in search order."];
@@ -32,23 +36,32 @@ async function discover() {
       if (!pages.length) lines.push("(nothing)");
       for (const p of pages) { const c = p.categoryinfo || {}; lines.push(`${String(c.files ?? "?").padStart(5)} ${String(c.subcats ?? "?").padStart(4)}  ${p.title}`); }
     } catch (e) { lines.push(`(failed: ${e.message})`); }
-    await sleep(200);
+    await sleep(PACE);
+  }
+  lines.push("", "# Subcategories: files · subcategories · title");
+  for (const title of cfg.trees || []) {
+    lines.push("", `## ${title}`);
+    try {
+      const r = await commons({ generator: "categorymembers", gcmtitle: title, gcmtype: "subcat", gcmlimit: "200", prop: "categoryinfo" });
+      const pages = ((r.query && r.query.pages) || []).sort((a, b) => a.title.localeCompare(b.title));
+      if (!pages.length) lines.push("(no subcategories, or no such category)");
+      for (const p of pages) { const c = p.categoryinfo || {}; lines.push(`${String(c.files ?? "?").padStart(5)} ${String(c.subcats ?? "?").padStart(4)}  ${p.title}`); }
+    } catch (e) { lines.push(`(failed: ${e.message})`); }
+    await sleep(500);
   }
   lines.push("", "# Scanned books (PDF / DjVu): pages · file");
   for (const kw of cfg.books || []) {
     lines.push("", `## ${kw}`);
     let any = false;
-    for (const mime of ["pdf", "djvu"]) {
-      try {
-        const r = await commons({ generator: "search", gsrnamespace: "6", gsrlimit: "8", gsrsearch: `${kw} filemime:${mime}`, prop: "imageinfo", iiprop: "size" });
-        for (const p of ((r.query && r.query.pages) || []).sort((a, b) => a.index - b.index)) { any = true; lines.push(`${String((p.imageinfo && p.imageinfo[0] && p.imageinfo[0].pagecount) ?? "?").padStart(5)}  ${p.title}`); }
-      } catch (e) { any = true; lines.push(`(failed: ${e.message})`); }
-      await sleep(200);
-    }
+    try {
+      const r = await commons({ generator: "search", gsrnamespace: "6", gsrlimit: "10", gsrsearch: `${kw} filetype:office`, prop: "imageinfo", iiprop: "size" });   // office = PDF and DjVu
+      for (const p of ((r.query && r.query.pages) || []).sort((a, b) => a.index - b.index)) { any = true; lines.push(`${String((p.imageinfo && p.imageinfo[0] && p.imageinfo[0].pagecount) ?? "?").padStart(5)}  ${p.title}`); }
+    } catch (e) { any = true; lines.push(`(failed: ${e.message})`); }
+    await sleep(PACE);
     if (!any) lines.push("(nothing)");
   }
   writeFileSync(new URL("discovery.md", outDir), lines.join("\n") + "\n");
-  console.log(`discovery: ${(cfg.searches || []).length} category searches, ${(cfg.books || []).length} book searches → out/discovery.md`);
+  console.log(`discovery: ${(cfg.searches || []).length} category searches, ${(cfg.trees || []).length} trees, ${(cfg.books || []).length} book searches, ${lines.filter(l => /^\(failed/.test(l)).length} failed → out/discovery.md`);
 }
 
 // Smaller versions of the images the app would show, for the contact sheets.
