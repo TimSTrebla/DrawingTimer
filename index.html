@@ -288,6 +288,7 @@ const CONFIG = {
     ai:           {group:"Your own", name:"AI images", level:2, about:"Your own generations.", keywords:["ai","midjourney","flux","generat","sd"]},
   },
   defaults: [],   // ticked on a first visit; afterwards the device remembers your choice
+  slowDownMs: 2500, // first pause after a source answers "too many requests" (HTTP 429); doubles, triples … up to four retries
   sets: [
     // Lessons. Chosen by eye from contact sheets (tools/review.mjs): plates only, no text pages.
     {cat:"bargue",  name:"Bargue · I, after casts",      source:"commons", query:"Category:Cours de dessin - estampe - (Charles Bargue) ; (avec le concours de Jean-Léon Gérôme) - btv1b52517498w", level:1.1, max:200, screen:"blank", snapshotOnly:true},   // every second scan is a blank back
@@ -440,9 +441,11 @@ const queue = (n => { let active = 0; const q = [];
 })(8);
 async function getJSON(url, tries = 2, timeout = 15000){
   for (let k = 0; ; k++){
-    const ac = new AbortController(), t = setTimeout(() => ac.abort(), timeout);
-    try { const r = await fetch(url, {signal: ac.signal}); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
-    catch (e){ if (k + 1 >= tries) throw e; await new Promise(r => setTimeout(r, 900 * (k + 1))); }
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), timeout); let slowDown = false;
+    try { const r = await fetch(url, {signal: ac.signal}); slowDown = r.status === 429; if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
+    catch (e){   // "too many requests" is an instruction to wait, not a failure: more patience, longer pauses
+      if (k + 1 >= (slowDown ? 5 : tries)) throw e;
+      await new Promise(r => setTimeout(r, slowDown ? CONFIG.slowDownMs * (k + 1) * (1 + Math.random() / 2) : 900 * (k + 1))); }
     finally { clearTimeout(t); }
   }
 }

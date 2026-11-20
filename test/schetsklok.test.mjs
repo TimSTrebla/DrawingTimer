@@ -135,16 +135,20 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, d
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://localhost:8123" });
 const page = await ctx.newPage();
 const errors = [], expected404 = [], unknown = [];
-page.on("console", m => { if (m.type() === "error") (/404/.test(m.text()) ? expected404 : errors).push(m.text()); });
+page.on("console", m => { if (m.type() === "error") (/404|429/.test(m.text()) ? expected404 : errors).push(m.text()); });
 page.on("pageerror", e => errors.push("pageerror: " + e.message));
 let imgOk = 0, imgBad = 0, snapBody = null; const badUrls = new Set();   // one broken image may be asked for at two sizes
 const json = (route, body) => route.fulfill({ contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
+let throttled = 0;
 await page.route("**/*", route => {
   const u = route.request().url();
   if (u === "http://localhost:8123/") return route.fulfill({ contentType: "text/html", body: html });
   if (u === "http://localhost:8123/sets.json") return snapBody ? json(route, snapBody) : route.fulfill({ status: 404, body: "" });
   if (u.startsWith("https://fonts.googleapis.com/")) return route.fulfill({ contentType: "text/css", body: "" });
-  if (u.startsWith("https://commons.wikimedia.org/w/api.php")) return json(route, commons(u));
+  if (u.startsWith("https://commons.wikimedia.org/w/api.php")) {
+    if (/Belvedere/.test(decodeURIComponent(u)) && throttled++ < 2) return route.fulfill({ status: 429, headers: { "access-control-allow-origin": "*" }, body: "" });   // "too many requests", twice
+    return json(route, commons(u));
+  }
   if (u.startsWith("https://query.wikidata.org/sparql")) return json(route, wikidata(u));
   if (u.startsWith("https://api.artic.edu/api/v1/artworks/search")) return json(route, aic(u));
   if (u.startsWith("https://openaccess-api.clevelandart.org/api/artworks/")) return json(route, cma(u));
@@ -160,6 +164,7 @@ const pressed = () => page.$$eval(".chip[data-cat]", els => els.filter(e => e.ge
 
 await page.clock.install({ time: new Date("2026-11-12T10:00:00") });
 await page.goto("http://localhost:8123/");
+await page.evaluate(() => { window.schetsklok.CONFIG.slowDownMs = 60; });   // the wait after "too many requests", shortened for the test
 
 console.log("\n1 · First visit: nothing ticked, nothing loaded; ticking loads");
 const catKeys = await page.evaluate(() => Object.keys(window.schetsklok.CONFIG.categories));
@@ -173,6 +178,7 @@ check(on.length === catKeys.length - 3, `${on.length} categories ticked for the 
 await settled(on);
 const info = await setsOf(on);
 for (const s of info) if (s.status !== "snapshot") check(s.status === "ok" && s.n > 0, `${s.name} (${s.source}): ${s.status}, ${s.n} images`);
+check(throttled >= 3 && info.find(s => s.name === "The Belvedere Torso").status === "ok", `a source that answers "too many requests" twice is waited for, not given up on (${throttled} requests)`);
 const snapOnly = info.filter(s => s.status === "snapshot").map(s => s.name);
 check(snapOnly.join() === "Bargue · I, after casts", `a set that needs its images screened waits for the snapshot (${snapOnly.join(", ")})`);
 const groups = await page.$$eval("#cats .group .lbl", els => els.map(e => e.textContent));
@@ -366,8 +372,8 @@ await page.click('.chip[data-cat="colour"]');
 check(total() === before6 && await page.isEnabled("#startBtn"), "ticking a snapshotted category costs no API call; start is possible at once");
 
 console.log(`\nconsole errors: ${errors.length}${errors.length ? "\n  " + errors.join("\n  ") : ""}`);
-console.log(`deliberately broken images (404 in console, expected): ${expected404.length}`);
-check(errors.length === 0, "0 console errors (apart from the deliberate 404s)");
+console.log(`deliberate 404s and 429s in the console (expected): ${expected404.length}`);
+check(errors.length === 0, "0 console errors (apart from the deliberate 404s and 429s)");
 check(unknown.length === 0, `no unexpected network requests${unknown.length ? ": " + unknown.slice(0, 3).join(", ") : ""}`);
 console.log(`\n${fails.length ? fails.length + " FAILED" : "ALL GREEN"} · images loaded ${imgOk}, refused ${imgBad} · screenshots in ${out}`);
 await browser.close();
