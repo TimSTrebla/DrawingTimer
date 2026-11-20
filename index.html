@@ -93,6 +93,7 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
 #stage{position:fixed;inset:0;background:var(--graphite);display:grid;grid-template-rows:1fr auto;z-index:20}
 .view{position:relative;overflow:hidden;display:grid;place-items:center;min-height:0;touch-action:none;padding:calc(8px + env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) 8px max(8px,env(safe-area-inset-left,0px))}
 .view.zoomed{cursor:grab}
+.view,.pic,.pic img{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
 .pic{position:relative;transform-origin:center center;will-change:transform}
 .pic img{display:block;width:100%;height:100%;transition:filter .2s}
 .view img.gray{filter:grayscale(1) contrast(1.05)}
@@ -171,14 +172,14 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
     </details>
     <details>
       <summary>About</summary>
-      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Each image gets a complexity score (1–3) from its set, medium and title; every session draws from its own range of that score, and within a session the shortest poses get the simplest images. A weekly snapshot of all sources (<span id="snapDate">none loaded</span>) makes the first visit quick; anything missing is fetched live and kept on this device for three days. Pinch, double-tap or scroll to zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Esc stop.</p>
+      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Each image gets a complexity score (1–3) from its set, medium and title; every session draws from its own range of that score, and within a session the shortest poses get the simplest images. A weekly snapshot of all sources (<span id="snapDate">none loaded</span>) makes the first visit quick; anything missing is fetched live and kept on this device for three days. Pinch, double-tap, scroll or the Z button zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Z zoom · Esc stop. Version <span id="version"></span>.</p>
     </details>
   </div>
 </div>
 
 <div id="stage" hidden>
   <div class="view" id="view">
-    <div class="pic" id="pic"><img id="img" alt=""><div class="grid" id="grid" hidden></div></div>
+    <div class="pic" id="pic"><img id="img" alt="" draggable="false"><div class="grid" id="grid" hidden></div></div>
     <div class="loading" id="loading" hidden>loading image…</div>
     <div class="break" id="brk" hidden><div><div class="lbl">Next block</div><h2 id="brkT"></h2><p class="note" id="brkS"></p><button class="btn primary" id="brkGo">Continue</button></div></div>
     <div class="break" id="fin" hidden><div class="done"><div class="lbl">Done</div><h2 id="finT"></h2><div class="thumbs" id="thumbs"></div><div class="row"><button class="btn primary" id="again">Another session</button><button class="btn" id="back">Back</button></div></div></div>
@@ -194,6 +195,7 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
       <button class="ib" id="bGray" aria-pressed="false" title="Greyscale (G)">G</button>
       <button class="ib" id="bFlip" aria-pressed="false" title="Mirror (F)">⇋</button>
       <button class="ib" id="bGrid" aria-pressed="false" title="Grid (R)">#</button>
+      <button class="ib" id="bZoom" aria-pressed="false" title="Zoom 2.5× / fit (Z)">Z</button>
       <button class="ib" id="bStop" title="Stop (Esc)">✕</button>
     </div>
   </div>
@@ -877,53 +879,66 @@ function applyZoom(){
   Z.tx = Math.min(maxX, Math.max(-maxX, Z.tx)); Z.ty = Math.min(maxY, Math.max(-maxY, Z.ty));
   pic.style.transform = Z.z === 1 ? "" : `translate(${Z.tx}px, ${Z.ty}px) scale(${Z.z})`;
   view.classList.toggle("zoomed", Z.z > 1);
+  $("bZoom").setAttribute("aria-pressed", Z.z > 1); $("bZoom").textContent = Z.z > 1 ? `×${Z.z < 10 ? Z.z.toFixed(1) : Math.round(Z.z)}` : "Z";
 }
+const toggleZoom = () => Z.z > 1 ? resetZoom() : zoomAt(2.5, 0, 0);
 function resetZoom(){ Z.z = 1; Z.tx = Z.ty = 0; applyZoom(); }
 function zoomAt(z, x, y){   // the picture point under (x, y) stays put; x, y relative to the stage centre
   z = Math.min(8, Math.max(1, z));
   const px = (x - Z.tx) / Z.z, py = (y - Z.ty) / Z.z;
   Z.z = z; Z.tx = x - px * z; Z.ty = y - py * z; applyZoom();
 }
+// Fingers (or mouse/pen) on the stage, by id → position relative to the stage centre. One gesture at a time.
 const ptrs = new Map(); let gest = null, lastTap = 0;
-const rel = e => { const c = view.getBoundingClientRect(); return [e.clientX - c.left - c.width / 2, e.clientY - c.top - c.height / 2]; };
-const mid = p => [(p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2], dist = p => Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]);
-view.addEventListener("pointerdown", e => {
-  if (e.target.closest("button")) return;   // the break and finish buttons sit inside the stage
-  try { view.setPointerCapture(e.pointerId); } catch {}
-  ptrs.set(e.pointerId, rel(e)); const p = [...ptrs.values()];
+const rel = (cx, cy) => { const c = view.getBoundingClientRect(); return [cx - c.left - c.width / 2, cy - c.top - c.height / 2]; };
+const mid = p => [(p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2], dist = p => Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]) || 1;
+function beginGesture(){
+  const p = [...ptrs.values()];
   gest = p.length >= 2 ? {kind:"pinch", d0: dist(p), z0: Z.z, m0: mid(p), tx0: Z.tx, ty0: Z.ty}
                        : {kind:"drag", x0: p[0][0], y0: p[0][1], tx0: Z.tx, ty0: Z.ty, moved: false};
-});
-view.addEventListener("pointermove", e => {
-  if (!ptrs.has(e.pointerId) || !gest) return;
-  ptrs.set(e.pointerId, rel(e)); const p = [...ptrs.values()];
+}
+function moveGesture(){
+  if (!gest) return; const p = [...ptrs.values()];
   if (gest.kind === "pinch" && p.length >= 2){
     const z = Math.min(8, Math.max(1, gest.z0 * dist(p) / gest.d0)), m = mid(p);
     const px = (gest.m0[0] - gest.tx0) / gest.z0, py = (gest.m0[1] - gest.ty0) / gest.z0;   // picture point under the first midpoint…
     Z.z = z; Z.tx = m[0] - px * z; Z.ty = m[1] - py * z; applyZoom();                        // …stays under the current one
-  } else if (gest.kind === "drag" && Z.z > 1){
+  } else if (gest.kind === "drag" && p.length && Z.z > 1){
     const dx = p[0][0] - gest.x0, dy = p[0][1] - gest.y0; if (Math.hypot(dx, dy) > 4) gest.moved = true;
     Z.tx = gest.tx0 + dx; Z.ty = gest.ty0 + dy; applyZoom();
   }
-});
-const endPtr = e => {
-  if (!ptrs.has(e.pointerId)) return;
-  const [x, y] = ptrs.get(e.pointerId); ptrs.delete(e.pointerId);
-  if (gest && gest.kind === "drag" && !gest.moved && e.type === "pointerup"){   // a tap; two quick ones zoom
+}
+function endGesture(id, lifted){
+  if (!ptrs.has(id)) return;
+  const [x, y] = ptrs.get(id); ptrs.delete(id);
+  if (lifted && gest && gest.kind === "drag" && !gest.moved){   // a tap; two quick ones zoom
     const now = performance.now();
     if (now - lastTap < 320){ Z.z > 1 ? resetZoom() : zoomAt(2.5, x, y); lastTap = 0; } else lastTap = now;
   }
   const p = [...ptrs.values()];
   gest = p.length ? {kind:"drag", x0: p[0][0], y0: p[0][1], tx0: Z.tx, ty0: Z.ty, moved: true} : null;
-};
-view.addEventListener("pointerup", endPtr); view.addEventListener("pointercancel", endPtr);
-view.addEventListener("wheel", e => { e.preventDefault(); const [x, y] = rel(e); zoomAt(Z.z * Math.exp(-e.deltaY * 0.002), x, y); }, {passive:false});
+}
+// Touch screens: Touch Events with preventDefault, so the browser never takes the pinch for itself.
+// Mouse and pen: Pointer Events. On a touch screen, touch pointers are left to the touch handlers.
+const TOUCH = "ontouchstart" in window;
+const onButton = e => e.target.closest && e.target.closest("button");   // the break and finish buttons sit inside the stage
+view.addEventListener("touchstart", e => { if (onButton(e)) return; e.preventDefault(); for (const t of e.changedTouches) ptrs.set("t" + t.identifier, rel(t.clientX, t.clientY)); beginGesture(); }, {passive:false});
+view.addEventListener("touchmove", e => { if (!gest) return; e.preventDefault(); for (const t of e.changedTouches) if (ptrs.has("t" + t.identifier)) ptrs.set("t" + t.identifier, rel(t.clientX, t.clientY)); moveGesture(); }, {passive:false});
+for (const type of ["touchend", "touchcancel"]) view.addEventListener(type, e => { for (const t of e.changedTouches) endGesture("t" + t.identifier, type === "touchend"); });
+view.addEventListener("pointerdown", e => {
+  if ((TOUCH && e.pointerType === "touch") || onButton(e)) return;
+  try { view.setPointerCapture(e.pointerId); } catch {}
+  ptrs.set(e.pointerId, rel(e.clientX, e.clientY)); beginGesture();
+});
+view.addEventListener("pointermove", e => { if ((TOUCH && e.pointerType === "touch") || !ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, rel(e.clientX, e.clientY)); moveGesture(); });
+for (const type of ["pointerup", "pointercancel"]) view.addEventListener(type, e => { if (TOUCH && e.pointerType === "touch") return; endGesture(e.pointerId, type === "pointerup"); });
+view.addEventListener("wheel", e => { e.preventDefault(); const [x, y] = rel(e.clientX, e.clientY); zoomAt(Z.z * Math.exp(-e.deltaY * 0.002), x, y); }, {passive:false});
 window.addEventListener("resize", fitPic);
 function togglePause(){ if (!S) return; S.paused = !S.paused; $("bPause").textContent = S.paused ? "▶︎ go" : "❚❚"; }
 
 $("startBtn").onclick = start;
 $("bNext").onclick = () => next(); $("bPrev").onclick = prev; $("bPause").onclick = togglePause; $("bStop").onclick = stop;
-$("bGray").onclick = () => flipT("bGray"); $("bFlip").onclick = () => flipT("bFlip"); $("bGrid").onclick = () => flipT("bGrid");
+$("bGray").onclick = () => flipT("bGray"); $("bFlip").onclick = () => flipT("bFlip"); $("bGrid").onclick = () => flipT("bGrid"); $("bZoom").onclick = toggleZoom;
 $("brkGo").onclick = () => S && S.pendingBreak != null && show(S.pendingBreak);
 $("again").onclick = start; $("back").onclick = stop;
 $("freeDur").onchange = () => updateSum(); $("freeCount").onchange = () => updateSum();
@@ -933,7 +948,7 @@ document.addEventListener("keydown", e => {
   if (e.key === " "){ e.preventDefault(); togglePause(); }
   else if (e.key === "ArrowRight") next(); else if (e.key === "ArrowLeft") prev();
   else if (e.key === "Escape") stop();
-  else if (/^[gG]$/.test(e.key)) flipT("bGray"); else if (/^[fF]$/.test(e.key)) flipT("bFlip"); else if (/^[rR]$/.test(e.key)) flipT("bGrid");
+  else if (/^[gG]$/.test(e.key)) flipT("bGray"); else if (/^[fF]$/.test(e.key)) flipT("bFlip"); else if (/^[rR]$/.test(e.key)) flipT("bGrid"); else if (/^[zZ]$/.test(e.key)) toggleZoom();
 });
 document.addEventListener("visibilitychange", async () => { if (!document.hidden && S && !wake){ try { wake = await navigator.wakeLock?.request("screen"); } catch {} } });
 
@@ -943,7 +958,8 @@ if (prefs.brk != null) $("optBreak").checked = prefs.brk;
 if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
 // For tests, the snapshot tool and the curious.
-window.schetsklok = {CONFIG, sets, pool, planPool, loadAll, snapshot, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
+const VERSION = "2026-11-20"; $("version").textContent = VERSION;
+window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
 
 renderPlans(); refresh();
 seedFromSnapshot().then(loadSelected);

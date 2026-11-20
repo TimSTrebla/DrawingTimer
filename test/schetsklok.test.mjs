@@ -245,20 +245,43 @@ const fit = await page.evaluate(() => { const v = document.getElementById("view"
   const vw = v.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), vh = v.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
   return { pw: p.offsetWidth, ph: p.offsetHeight, vw, vh, nat: document.getElementById("img").naturalWidth }; });
 check(Math.abs(fit.pw - fit.vw) <= 1 || Math.abs(fit.ph - fit.vh) <= 1, `image scaled to fill the stage in one dimension (${fit.pw}×${fit.ph} in ${fit.vw}×${fit.vh}, natural ${fit.nat} wide)`);
-const gesture = (seq) => page.evaluate(seq => { const v = document.getElementById("view"), r = v.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  for (const [type, id, dx, dy] of seq) v.dispatchEvent(new PointerEvent(type, { pointerId: id, clientX: cx + dx, clientY: cy + dy, bubbles: true, isPrimary: id === 1, pointerType: "touch" }));
+// Real Touch Events on the image, as a tablet sends them: start/move/end with the full touches list.
+const gesture = (seq) => page.evaluate(seq => { const im = document.getElementById("img"), v = document.getElementById("view"), r = v.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const active = window.__touches = window.__touches || new Map();
+  for (const [type, id, dx, dy] of seq){
+    const t = new Touch({ identifier: id, target: im, clientX: cx + dx, clientY: cy + dy, pageX: cx + dx, pageY: cy + dy });
+    if (type === "touchend") active.delete(id); else active.set(id, t);
+    im.dispatchEvent(new TouchEvent(type, { touches: [...active.values()], targetTouches: [...active.values()], changedTouches: [t], bubbles: true, cancelable: true }));
+  }
   return window.schetsklok.zoom(); }, seq);
-let z = await gesture([["pointerdown", 1, -50, 0], ["pointerdown", 2, 50, 0], ["pointermove", 1, -150, 0], ["pointermove", 2, 150, 0], ["pointerup", 1, -150, 0], ["pointerup", 2, 150, 0]]);
+check(await page.evaluate(() => "ontouchstart" in window), "test browser is a touch device");
+let z = await gesture([["touchstart", 1, -50, 0], ["touchstart", 2, 50, 0], ["touchmove", 1, -150, 0], ["touchmove", 2, 150, 0], ["touchend", 1, -150, 0], ["touchend", 2, 150, 0]]);
 check(Math.abs(z.z - 3) < 0.01, `pinch: fingers 100 → 300 px apart zooms 3× (${z.z})`);
-z = await gesture([["pointerdown", 1, 0, 0], ["pointermove", 1, -80, -40], ["pointerup", 1, -80, -40]]);
+check(await page.$eval("#bZoom", e => e.textContent) === "×3.0", "rail shows the zoom factor");
+z = await gesture([["touchstart", 1, 0, 0], ["touchmove", 1, -80, -40], ["touchend", 1, -80, -40]]);
 check(z.tx === -80 && z.ty === -40, `drag pans the zoomed image (${z.tx}, ${z.ty})`);
+const synthPointer = await page.evaluate(() => { const v = document.getElementById("view"), z0 = window.schetsklok.zoom().z;
+  v.dispatchEvent(new PointerEvent("pointerdown", { pointerId: 9, clientX: 10, clientY: 10, bubbles: true, pointerType: "touch" }));
+  v.dispatchEvent(new PointerEvent("pointerup", { pointerId: 9, clientX: 10, clientY: 10, bubbles: true, pointerType: "touch" }));
+  v.dispatchEvent(new PointerEvent("pointerdown", { pointerId: 9, clientX: 10, clientY: 10, bubbles: true, pointerType: "touch" }));
+  v.dispatchEvent(new PointerEvent("pointerup", { pointerId: 9, clientX: 10, clientY: 10, bubbles: true, pointerType: "touch" }));
+  return window.schetsklok.zoom().z === z0; });
+check(synthPointer, "touch pointer events are left to the touch handlers (no double handling)");
 await page.click("#bNext"); await page.waitForFunction(() => window.schetsklok.session()?.ready && window.schetsklok.session().i === 1);
 z = await page.evaluate(() => window.schetsklok.zoom());
 check(z.z === 1 && z.tx === 0 && z.ty === 0, "next image resets the zoom");
-z = await gesture([["pointerdown", 1, 100, 50], ["pointerup", 1, 100, 50], ["pointerdown", 1, 100, 50], ["pointerup", 1, 100, 50]]);
+z = await gesture([["touchstart", 1, 100, 50], ["touchend", 1, 100, 50], ["touchstart", 1, 100, 50], ["touchend", 1, 100, 50]]);
 check(z.z === 2.5, `double-tap zooms 2.5× (${z.z})`);
-z = await gesture([["pointerdown", 1, 0, 0], ["pointerup", 1, 0, 0], ["pointerdown", 1, 0, 0], ["pointerup", 1, 0, 0]]);
+z = await gesture([["touchstart", 1, 0, 0], ["touchend", 1, 0, 0], ["touchstart", 1, 0, 0], ["touchend", 1, 0, 0]]);
 check(z.z === 1, "double-tap again fits the image");
+await page.click("#bZoom"); z = await page.evaluate(() => window.schetsklok.zoom());
+check(z.z === 2.5 && await page.$eval("#bZoom", e => e.getAttribute("aria-pressed")) === "true", "Z button zooms 2.5× without a gesture");
+await page.keyboard.press("z"); z = await page.evaluate(() => window.schetsklok.zoom());
+check(z.z === 1, "Z key fits the image again");
+z = await page.evaluate(() => { const v = document.getElementById("view"), r = v.getBoundingClientRect();
+  v.dispatchEvent(new WheelEvent("wheel", { deltaY: -500, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true, cancelable: true })); return window.schetsklok.zoom(); });
+check(Math.abs(z.z - Math.E) < 0.01, `scroll wheel zooms too (${z.z.toFixed(2)})`);
+await page.click("#bZoom");
 const badBefore = imgBad;
 let shot = false, breaks = 0, overlayWhileReady = 0;
 for (let k = 0; k < 4000; k++) {
