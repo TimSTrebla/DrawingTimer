@@ -290,7 +290,7 @@ for (let k = 0; k < 4000; k++) {
   if (st.ready && st.load) overlayWhileReady++;
   if (st.brk) { breaks++; await page.click("#brkGo"); continue; }
   if (!st.ready) { await page.waitForTimeout(20); continue; }
-  if (!shot && st.i === 13) { await page.waitForTimeout(100); await page.screenshot({ path: join(out, "3-session.png") }); shot = true; }
+  if (!shot && st.i === 8) { await page.waitForTimeout(100); await page.screenshot({ path: join(out, "3-session.png") }); shot = true; }
   await page.clock.runFor(2000);
 }
 const S = await page.evaluate(() => { const S = window.schetsklok.session(); return { over: S.over, log: S.log, swaps: S.swaps.length, slots: S.slots.map(s => ({ dur: s.dur, d: s.it.d, ck: s.it.ck, url: s.it.url })) }; });

@@ -14,12 +14,22 @@ const page = await browser.newPage();
 page.on("pageerror", e => console.error("page error:", e.message));
 await page.route("http://localhost:8123/", r => r.fulfill({ contentType: "text/html", body: html }));
 await page.route("http://localhost:8123/sets.json", r => r.fulfill({ status: 404, body: "" }));   // start from nothing, not from the old snapshot
+// The Art Institute's API refused the page's own requests ("Failed to fetch": no CORS answer). Here, outside a
+// browser, Node fetches it and hands the JSON to the page, identifying this tool the way the API's docs ask.
+const AIC_ID = "Schetsklok snapshot (https://github.com/TimSTrebla/DrawingTimer)";
+await page.route("https://api.artic.edu/**", async r => {
+  try {
+    const res = await fetch(r.request().url(), { headers: { "User-Agent": AIC_ID, "AIC-User-Agent": AIC_ID, "Accept": "application/json" } });
+    r.fulfill({ status: res.status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: await res.text() });
+  } catch (e) { r.fulfill({ status: 502, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ error: String(e) }) }); }
+});
 await page.goto("http://localhost:8123/");
 await page.evaluate(() => window.schetsklok.loadAll());
 await page.waitForFunction(() => window.schetsklok.sets.every(s => ["ok", "error", "empty"].includes(s.status)), null, { timeout: 15 * 60 * 1000 });
 
 const rows = await page.evaluate(() => window.schetsklok.sets.map(s => ({ status: s.status, n: s.items.length, name: s.set.name, err: s.err })));
 for (const r of rows) console.log(`${r.status.padEnd(6)} ${String(r.n).padStart(4)}  ${r.name}${r.err ? "  — " + r.err : ""}`);
+for (const r of rows.filter(r => r.status === "ok" && r.n < 30)) console.log(`thin    ${String(r.n).padStart(4)}  ${r.name}: raise its calls or widen the search`);
 const bad = rows.filter(r => r.status !== "ok");
 console.log(`\n${rows.length - bad.length} of ${rows.length} sets ok, ${rows.reduce((a, r) => a + r.n, 0)} images` + (bad.length ? `; not in the snapshot: ${bad.map(r => r.name).join(", ")}` : ""));
 

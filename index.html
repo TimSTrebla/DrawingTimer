@@ -279,7 +279,7 @@ const CONFIG = {
     // Foundations
     {cat:"bargue",  name:"Bargue drawing course I",      source:"commons", query:"Category:Bargue-Gérôme Drawing Course I", level:1},
     {cat:"anatomy", name:"Albinus · plates",             source:"commons", query:"Category:Tabulae sceleti et musculorum corporis humani", level:2, exclude:"folio|\\bpage|text|titel"},   // the plates, not the book scans
-    {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:12},
+    {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:40},   // 30 subcategories, one sheet each
     {cat:"anatomy", name:"Anatomical studies (AIC)",     source:"aic",     query:"anatomical study", type:"drawing|print", level:2},
     {cat:"anatomy", name:"Écorchés (AIC)",               source:"aic",     query:"ecorche", type:"drawing|print|sculpture", level:2},
     {cat:"anatomy", name:"Anatomical studies (Cleveland)",source:"cma",    query:"anatomical", type:"Drawing", level:2},
@@ -312,10 +312,10 @@ const CONFIG = {
     {cat:"famous",  name:"Famous paintings (Wikidata)",  source:"wikidata", query:SPARQL_FAMOUS, level:2.5},
     {cat:"rijks",   name:"Rijksmuseum paintings (Wikidata)", source:"wikidata", query:SPARQL_RIJKS, level:2.5, sourceName:"Rijksmuseum · via Wikimedia"},
     // Media
-    {cat:"engraving", name:"Doré · Divine Comedy",       source:"commons", query:"Category:Gustave Dore's illustrations to the Divine Comedy", level:3},
+    {cat:"engraving", name:"Doré · Divine Comedy",       source:"commons", query:"Category:Gustave Dore's illustrations to the Divine Comedy", level:3, calls:90},   // Inferno, Purgatorio, Paradiso: one subcategory per plate
     {cat:"engraving", name:"Doré · Bible",               source:"commons", query:"Category:Doré's English Bible", level:3},
     {cat:"engraving", name:"Doré · Don Quixote",         source:"commons", query:"Category:Don Quijote illustrated by Gustave Doré", level:3},
-    {cat:"engraving", name:"Dürer · engravings",         source:"commons", query:"Category:Engravings by Albrecht Dürer", level:3},
+    {cat:"engraving", name:"Dürer · engravings",         source:"commons", query:"Category:Engravings by Albrecht Dürer", level:3, calls:40},   // three periods, one subcategory per print
     {cat:"engraving", name:"Rembrandt · etchings",       source:"commons", query:"Category:Etchings by Rembrandt", level:3},
     {cat:"engraving", name:"Goya · Los Caprichos",       source:"commons", query:"Category:Los Caprichos", level:3, calls:12},
     {cat:"woodblock", name:"Hokusai",                    source:"aic",     query:"Hokusai", type:"print", level:2},
@@ -958,7 +958,7 @@ if (prefs.brk != null) $("optBreak").checked = prefs.brk;
 if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
 // For tests, the snapshot tool and the curious.
-const VERSION = "2026-11-20"; $("version").textContent = VERSION;
+const VERSION = "2026-11-20b"; $("version").textContent = VERSION;
 window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, session: () => S, catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
 
 renderPlans(); refresh();
