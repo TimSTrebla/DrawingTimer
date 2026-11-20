@@ -325,7 +325,7 @@ const CONFIG = {
     {cat:"pastel",  name:"Pastels (Cleveland)",          source:"cma",     query:"pastel", type:"Drawing", medium:"pastel", level:2},
     {cat:"oil",     name:"Portraits in oil (AIC)",       source:"aic",     query:"portrait", type:"painting", medium:"oil", exclude:NO_SCENERY, level:2},
     {cat:"oil",     name:"Portraits in oil (Cleveland)", source:"cma",     query:"portrait", type:"Painting", exclude:NO_SCENERY, level:2},
-    {cat:"oil",     name:"Figures in oil (AIC)",         source:"aic",     query:"figure", type:"painting", medium:"oil", exclude:NO_SCENERY, level:2},
+    {cat:"oil",     name:"Figures in oil (AIC)",         source:"aic",     query:"woman", type:"painting", medium:"oil", exclude:NO_SCENERY, level:2},   // "figure" found 5; "woman" is how the titles read
     {cat:"sculpture", name:"Marble & bronze (AIC)",      source:"aic",     query:"marble figure", type:"sculpture", level:1},
     {cat:"sculpture", name:"Figures (Cleveland)",        source:"cma",     query:"figure", type:"Sculpture", level:1},
     // Modern
@@ -339,7 +339,7 @@ const CONFIG = {
     {cat:"expressionism", name:"Expressionism (Cleveland)",source:"cma",   query:"expressionism", level:2},
     {cat:"abstraction", name:"Kandinsky · abstract",     source:"commons", query:"Category:Abstract paintings by Wassily Kandinsky", level:2, calls:12},
     {cat:"abstraction", name:"af Klint · Paintings for the Temple", source:"commons", query:"Category:The Paintings for the Temple (Hilma af Klint)", level:2},
-    {cat:"abstraction", name:"Abstraction (AIC)",        source:"aic",     query:"abstraction", type:"painting", style:"abstract|cubis|futuris|suprematis|de stijl|neo-plastic", level:2},
+    {cat:"abstraction", name:"Abstraction (AIC)",        source:"aic",     query:"abstract", type:"painting", style:"abstract|cubis|futuris|suprematis|de stijl|neo-plastic", level:2},
   ],
   maxPerSet: 120,   // more is not needed and keeps loading fast
   commonsCalls: 8,  // default max API calls per Commons set; each subcategory costs one
@@ -348,6 +348,7 @@ const CONFIG = {
   width: 1920,      // image width on Commons (one of Wikimedia's standard sizes)
   aicWidth: 1686,   // IIIF width at the Art Institute; falls back to 843 when a size is refused
   cacheHours: 72,   // keep live search results on this device
+  wikidataTimeout: 90000,   // the query service can be slow; the snapshot normally spares the page this wait
   snapshot: "sets.json",   // weekly snapshot of every set (tools/snapshot.mjs); "" to disable
 };
 
@@ -461,7 +462,7 @@ async function loadCommons(set){
 const WDQS = "https://query.wikidata.org/sparql";
 async function loadWikidata(set){
   const exclude = rx(set.exclude), seen = new Set(), out = [];
-  const r = await queue(() => getJSON(WDQS + "?" + new URLSearchParams({query:set.query, format:"json"}), 2, 40000));
+  const r = await queue(() => getJSON(WDQS + "?" + new URLSearchParams({query:set.query, format:"json"}), 2, CONFIG.wikidataTimeout));
   for (const b of (r.results && r.results.bindings) || []){
     const item = b.item && b.item.value, img = b.image && b.image.value; if (!item || !img || seen.has(item)) continue;
     const file = decodeURIComponent((img.split("/Special:FilePath/")[1] || "").replace(/\+/g, " "));

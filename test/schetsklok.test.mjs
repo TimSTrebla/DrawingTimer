@@ -79,7 +79,7 @@ function aic(url) {
   const p = new URL(url).searchParams, page = +p.get("page"), q = p.get("q");
   calls.aic.push(q);
   const KINDS = [["Drawing and Watercolor", "Red and black chalk on cream laid paper"], ["Drawing and Watercolor", "Pastel on paper"], ["Print", "Color woodblock print"], ["Painting", "Oil on canvas"], ["Sculpture", "Marble"]];
-  const ki = /pastel/.test(q) ? 1 : /hokusai|utamaro|hiroshige/i.test(q) ? 2 : /marble/.test(q) ? 4 : /impression|portrait|figure$|landscape|battle|myth|abstraction|expression|oil sketch/.test(q) ? 3 : 0;
+  const ki = /pastel/.test(q) ? 1 : /hokusai|utamaro|hiroshige/i.test(q) ? 2 : /marble/.test(q) ? 4 : /impression|portrait|figure$|woman|landscape|battle|myth|abstract|expression|oil sketch/.test(q) ? 3 : 0;
   const kind = KINDS[ki];
   const base = ki * 20000 + (hash(q) % 97) * 100 + (page - 1) * 100;   // each query its own id range; a rare overlap exercises de-duplication
   const data = Array.from({ length: 100 }, (_, k) => {
