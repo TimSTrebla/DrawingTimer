@@ -78,14 +78,14 @@ async function sheets() {
   await page.route("http://localhost:8123/sets.json", r => r.fulfill({ status: 404, body: "" }));
   await routeOutside(ctx);   // images and the Art Institute, fetched outside the browser
   await page.goto("http://localhost:8123/");
-  const defs = await page.evaluate(() => window.schetsklok.CONFIG.sets.map(s => ({ name: s.name, cat: s.cat, source: s.source, query: String(s.query), level: s.level })));
+  const defs = await page.evaluate(() => window.schetsklok.CONFIG.sets.map(s => ({ ...s, query: String(s.query), k: window.schetsklok.keyOf(s) })));   // the whole definition, filters included
   const ex = cfg.existing ? new RegExp(cfg.existing, "i") : null;
   const jobs = [...(cfg.candidates || []).map(c => ({ ...c, candidate: true })), ...defs.filter(d => ex && (ex.test(d.cat) || ex.test(d.name))).map(d => ({ ...d, candidate: false }))];
   const md = [`# Review · ${new Date().toISOString().slice(0, 16)}`, "", "Contact sheets: 24 random images per set, as the app would get them. Candidates are not in the app yet.", "",
     "| set | kind | source | images | thumbnails loaded |", "|---|---|---|---|---|"], body = [];
   for (const job of jobs) {
     let items = [], err = "";
-    if (!job.candidate && snap.sets[job.name]) items = snap.sets[job.name].items;
+    if (!job.candidate && snap.sets[job.name] && snap.sets[job.name].k === job.k) items = snap.sets[job.name].items;   // what the app shows; a changed definition is probed afresh
     else try { items = await page.evaluate(set => window.schetsklok.probe(set), job); } catch (e) { err = String(e.message || e).split("\n")[0]; }
     const pick = sample(items, 24), file = slug(job.name) + ".jpg";
     let loaded = 0, blanks = 0;

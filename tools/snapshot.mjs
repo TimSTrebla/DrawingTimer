@@ -4,28 +4,37 @@
 // Run by hand: node tools/snapshot.mjs   (needs Playwright with Chromium)
 import { createRequire } from "node:module";
 import { readFileSync, writeFileSync } from "node:fs";
+import { UA, thumb, routeOutside, inkOf, BLANK_BELOW } from "./common.mjs";
 
 const { chromium } = createRequire(import.meta.url)("playwright");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const outFile = new URL("../sets.json", import.meta.url);
 
 const browser = await chromium.launch();
-const page = await browser.newPage();
+const ctx = await browser.newContext({ userAgent: UA });
+const page = await ctx.newPage();
 page.on("pageerror", e => console.error("page error:", e.message));
 await page.route("http://localhost:8123/", r => r.fulfill({ contentType: "text/html", body: html }));
 await page.route("http://localhost:8123/sets.json", r => r.fulfill({ status: 404, body: "" }));   // start from nothing, not from the old snapshot
-// The Art Institute's API refused the page's own requests ("Failed to fetch": no CORS answer). Here, outside a
-// browser, Node fetches it and hands the JSON to the page, identifying this tool the way the API's docs ask.
-const AIC_ID = "drawing-reference-snapshot/1.0 (automated, weekly, low volume)";   // a generic client name: no account or project details leave the repo
-await page.route("https://api.artic.edu/**", async r => {
-  try {
-    const res = await fetch(r.request().url(), { headers: { "User-Agent": AIC_ID, "AIC-User-Agent": AIC_ID, "Accept": "application/json" } });
-    r.fulfill({ status: res.status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: await res.text() });
-  } catch (e) { r.fulfill({ status: 502, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ error: String(e) }) }); }
-});
+// The Art Institute gives a browser on a hosted runner no answer, and image hosts throttle it: both go through Node.
+await routeOutside(ctx);
 await page.goto("http://localhost:8123/");
-await page.evaluate(() => window.schetsklok.loadAll());
+await page.evaluate(() => window.schetsklok.loadAll(true));   // true: also the sets that exist in the snapshot only
 await page.waitForFunction(() => window.schetsklok.sets.every(s => ["ok", "error", "empty"].includes(s.status)), null, { timeout: 15 * 60 * 1000 });
+
+// Scanned books where every second image is an empty page: look at a thumbnail of each image and drop
+// the blank ones. If too many thumbnails cannot be read, the set is left out rather than shipped with blanks.
+const toScreen = await page.evaluate(() => window.schetsklok.sets.filter(s => s.set.screen === "blank" && s.status === "ok").map(s => ({ name: s.set.name, items: s.items.map(i => ({ id: i.id, url: i.url })) })));
+for (const set of toScreen) {
+  const scores = await page.evaluate(async ([urls, ink]) => { const f = eval(ink), out = [];
+    for (const u of urls) out.push(await new Promise(res => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(f(im)); im.onerror = () => res(null); im.src = u; }));
+    return out; }, [set.items.map(i => thumb(i.url, 500)), inkOf]);   // the size the review sheets use, so their printed score is this score
+  const unread = scores.filter(v => v == null).length, blank = set.items.filter((it, k) => scores[k] != null && scores[k] < BLANK_BELOW).map(it => it.id);
+  const verdict = unread > set.items.length * 0.2 ? "unreadable" : "ok";
+  await page.evaluate(([name, blank, verdict]) => { const st = window.schetsklok.sets.find(s => s.set.name === name);
+    if (verdict !== "ok") { st.status = "error"; st.err = "could not look at the images"; st.items = []; } else st.items = st.items.filter(i => !blank.includes(i.id)); }, [set.name, blank, verdict]);
+  console.log(`screen  ${String(blank.length).padStart(4)}  ${set.name}: blank pages dropped of ${set.items.length}${unread ? `, ${unread} unread` : ""}${verdict !== "ok" ? " — set left out" : ""}`);
+}
 
 const rows = await page.evaluate(() => window.schetsklok.sets.map(s => ({ status: s.status, n: s.items.length, name: s.set.name, err: s.err })));
 for (const r of rows) console.log(`${r.status.padEnd(6)} ${String(r.n).padStart(4)}  ${r.name}${r.err ? "  — " + r.err : ""}`);

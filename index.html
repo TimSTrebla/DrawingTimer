@@ -125,7 +125,7 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
 <div class="wrap" id="setup">
   <header>
     <h1>Schetsklok</h1>
-    <p>Timed drawing from the masters. Tick what to draw, pick a session: short poses get plates and studies, long ones the finished work.</p>
+    <p>Timed drawing, set up like an academy course: lesson plates first, the masters after. Tick what to draw and pick a session.</p>
   </header>
 
   <div class="groups" id="cats"></div>
@@ -172,7 +172,7 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
     </details>
     <details>
       <summary>About</summary>
-      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Each image gets a complexity score (1–3) from its set, medium and title; every session draws from its own range of that score, and within a session the shortest poses get the simplest images. A weekly snapshot of all sources (<span id="snapDate">none loaded</span>) makes the first visit quick; anything missing is fetched live and kept on this device for three days. Pinch, double-tap, scroll or the Z button zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Z zoom · Esc stop. Version <span id="version"></span>.</p>
+      <p class="note">References come from Wikimedia Commons and Wikidata, the Art Institute of Chicago and the Cleveland Museum of Art: public domain, CC0 or CC&nbsp;BY, with the licence and a source link under every image. Lesson plates, made to be copied, score 1 to 1.4; master drawings start at 1.5 and paintings run up to 3, by set, medium and title. Every session draws from its own range of that score, and within a session the shortest poses get the simplest images, so lessons come first. A weekly snapshot of all sources (<span id="snapDate">none loaded</span>) makes the first visit quick; anything missing is fetched live and kept on this device for three days. Pinch, double-tap, scroll or the Z button zoom into an image; the zoom resets with the next one. Keys: space pause · ← → · G greyscale · F mirror · R grid · Z zoom · Esc stop. Version <span id="version"></span>.</p>
     </details>
   </div>
 </div>
@@ -220,10 +220,14 @@ textarea{width:100%;min-height:140px;background:var(--slate);color:var(--paper);
        type    AIC: artwork type/classification, e.g. "drawing", "painting", "print", "sculpture"
        medium  AIC: medium_display · CMA: technique
        style   AIC: style; soft — ignored when fewer than 12 works match it
+       require the title must match (keeps a free-text museum search on its subject)
        exclude title words you do not want (all sources; Commons sets always drop blank pages, covers and the like)
-   complexity: every image gets a score 1–3 = set level, nudged by title and medium (see `complexity` below).
+     Also: max (more images than maxPerSet), screen:"blank" + snapshotOnly (scanned books where every second image is
+     an empty page: only the snapshot tool can look at the images, so the set exists in the weekly snapshot only).
+   complexity: every image gets a score 1–3. Lesson plates (category lesson:true) keep their set's level, 1–1.4.
+               Everything else starts at 1.5: set level, nudged by title and medium (see `complexity` below).
                Each session plan draws from its own range of scores (PLANS below); within a plan the shortest
-               poses get the lowest scores in the pot, the longest the highest.
+               poses get the lowest scores in the pot, the longest the highest. So lessons come first.
    snapshot:   tools/snapshot.mjs (run weekly by GitHub Actions) stores every set in sets.json, so a first visit
                needs no API calls. Sets missing from it are fetched live and cached on the device.
    =================================================================================== */
@@ -247,17 +251,26 @@ const SPARQL_RIJKS = `SELECT ?item ?itemLabel ?creatorLabel ?image ?year ?links 
 
 const CONFIG = {
   licences: "pd+by",   // "pd" = public domain / CC0 only · "pd+by" = also CC BY (licence shown with every image)
-  groups: ["Foundations", "Figure", "Sketch to finish", "Media", "Modern", "Your own"],
+  groups: ["Lessons", "Anatomy & motion", "Master drawings", "Sketch to finish", "Media", "Modern", "Your own"],
   categories: {
-    bargue:       {group:"Foundations", name:"Bargue & casts", level:1, about:"Contour, proportion and value: the academy's first year.", keywords:["bargue","cast","gips"]},
-    anatomy:      {group:"Foundations", name:"Anatomy", level:2, about:"Skeleton and muscle under the skin: Albinus plates, Leonardo, écorchés.", keywords:["anatom","skelet","ecorche","écorché","spier","muscle"]},
-    hands:        {group:"Foundations", name:"Hands & feet", level:1, about:"The hardest small forms, as the masters studied them.", keywords:["hand","feet","foot","voet"]},
-    heads:        {group:"Foundations", name:"Heads", level:1, about:"Head studies: planes, features, expression.", keywords:["head","hoofd","face","gezicht","portret","portrait"]},
-    drapery:      {group:"Foundations", name:"Drapery", level:2, about:"Folds as form: how cloth follows the body.", keywords:["draper","plooi","fold"]},
-    gesture:      {group:"Figure", name:"Gesture & motion", level:1, about:"Muybridge's motion photographs: line of action, rhythm, balance.", keywords:["gesture","gebaar","motion","beweging","muybridge"]},
-    drawing:      {group:"Figure", name:"Figure studies", level:1, about:"Chalk and sanguine figure studies by the old masters.", keywords:["drawing","~tekening","sketch","~schets","chalk","krijt","sanguine","pencil","potlood","charcoal","houtskool"]},
-    nude:         {group:"Figure", name:"Life drawing", level:1, about:"Academic nude studies (académies), drawn from the model.", keywords:["nude","naakt","akt","model"]},
-    studies:      {group:"Sketch to finish", name:"Studies & sketches", level:1, about:"Preparatory studies and first ideas for larger works.", keywords:["studie","study","voorstudie"]},
+    // Lessons: plates made to be copied. lesson:true → complexity is the set's level as given (1–1.4), below every master drawing.
+    bargue:       {group:"Lessons", lesson:true, name:"Bargue course", level:1.1, about:"The drawing course of the 1860s: casts in outline and in shade, then copies after the masters.", keywords:["bargue"]},
+    drawingbooks: {group:"Lessons", lesson:true, name:"Drawing books", level:1.1, about:"Eyes, ears, mouths, heads, hands and feet, as drawing books have taught them since 1600.", keywords:["tekenboek","drawing book","cipriani","della bella"]},
+    construction: {group:"Lessons", lesson:true, name:"Construction", level:1.2, about:"Head, hands and body built from simple forms: Loomis and Bridgman.", keywords:["loomis","bridgman","construct"]},
+    firststeps:   {group:"Lessons", lesson:true, name:"First steps", level:1, about:"Simple objects, buildings and animals from beginners' books of the 1800s.", keywords:["first steps","beginner","eerste stappen"]},
+    casts:        {group:"Lessons", lesson:true, name:"Casts", level:1.2, about:"Academy studies after plaster casts: busts, torsos, hands and feet.", keywords:["cast","gips","plaster"]},
+    expression:   {group:"Lessons", lesson:true, name:"Expression", level:1.3, about:"Le Brun's heads of the passions: how a face shows feeling.", keywords:["passion","le brun","gelaatsuitdrukking"]},
+    proportion:   {group:"Lessons", lesson:true, name:"Proportion", level:1.3, about:"Dürer's measured figures and heads.", keywords:["proporti"]},
+    solids:       {group:"Lessons", lesson:true, name:"Solids", level:1.4, about:"Jamnitzer's geometric bodies: form, light and perspective without a subject.", keywords:["solid","perspecti","geometr"]},
+    anatomy:      {group:"Anatomy & motion", name:"Anatomy", level:2, about:"Skeleton and muscle under the skin: Albinus, Leonardo, Salvage's flayed gladiator.", keywords:["anatom","skelet","ecorche","écorché","spier","muscle"]},
+    gesture:      {group:"Anatomy & motion", lesson:true, name:"Motion", level:1.3, about:"Muybridge's photographs of people in motion: balance, rhythm, line of action.", keywords:["gesture","gebaar","motion","beweging","muybridge"]},
+    // Master drawings: after the lessons. Complexity starts at 1.5.
+    hands:        {group:"Master drawings", name:"Hands & feet", level:1.6, about:"The hardest small forms, as the masters studied them.", keywords:["hand","feet","foot","voet"]},
+    heads:        {group:"Master drawings", name:"Heads", level:1.6, about:"Head studies: planes, features, expression.", keywords:["head","hoofd","face","gezicht","portret","portrait"]},
+    drapery:      {group:"Master drawings", name:"Drapery", level:2, about:"Folds as form: how cloth follows the body.", keywords:["draper","plooi","fold"]},
+    drawing:      {group:"Master drawings", name:"Figure studies", level:1.6, about:"Chalk and sanguine figure studies by the old masters.", keywords:["drawing","~tekening","sketch","~schets","chalk","krijt","sanguine","pencil","potlood","charcoal","houtskool"]},
+    nude:         {group:"Master drawings", name:"Life drawing", level:1.6, about:"Academic nude studies (académies), drawn from the model.", keywords:["nude","naakt","akt","model"]},
+    studies:      {group:"Master drawings", name:"Studies & sketches", level:1.6, about:"Preparatory studies and first ideas for larger works.", keywords:["studie","study","voorstudie"]},
     oilsketch:    {group:"Sketch to finish", name:"Oil sketches", level:2, about:"Bozzetti and oil sketches: the painting decided in an hour.", keywords:["olieverfschets","oil sketch","bozzet"]},
     composition:  {group:"Sketch to finish", name:"Great scenes", level:3, about:"History, myth and bible paintings: staging, flow, groups.", keywords:["composit","scene","history","historie"]},
     famous:       {group:"Sketch to finish", name:"Famous paintings", level:2.5, about:"The best-known works of 42 masters, from Giotto to Matisse.", keywords:["famous","beroemd","meesterwerk","masterpiece"]},
@@ -266,7 +279,7 @@ const CONFIG = {
     woodblock:    {group:"Media", name:"Japanese woodblock", level:2, about:"Hokusai, Utamaro, Hiroshige: flat shape, line and design.", keywords:["ukiyo","japan","woodblock","houtsnede","woodcut"]},
     pastel:       {group:"Media", name:"Pastel", level:2, about:"Degas, Cassatt and others: colour that is drawn, not painted.", keywords:["pastel"]},
     oil:          {group:"Media", name:"Oil: head & figure", level:2, about:"Master copies in oil: the painted head and figure.", keywords:["oil","olie","olieverf","schilder","painting"]},
-    sculpture:    {group:"Media", name:"Sculpture", level:1, about:"Form in light: marble and bronze figures.", keywords:["sculpt","~beeldhouw","standbeeld","marble","marmer","bronze","brons","statue"]},
+    sculpture:    {group:"Media", name:"Sculpture", level:1.6, about:"Form in light: marble and bronze figures.", keywords:["sculpt","~beeldhouw","standbeeld","marble","marmer","bronze","brons","statue"]},
     watercolour:  {group:"Media", name:"Watercolour", level:2, about:"Your own watercolour references.", keywords:["watercol","aquarel","gouache"]},
     colour:       {group:"Modern", name:"Colour & light", level:2, about:"Landscapes and oil sketches: temperature, value, atmosphere.", keywords:["colour","color","kleur","landscape","landschap"]},
     impressionism:{group:"Modern", name:"Impressionism", level:2, about:"Monet to Van Gogh: broken colour, light and brushwork.", keywords:["impression"]},
@@ -276,33 +289,50 @@ const CONFIG = {
   },
   defaults: [],   // ticked on a first visit; afterwards the device remembers your choice
   sets: [
-    // Foundations
-    {cat:"bargue",  name:"Bargue drawing course I",      source:"commons", query:"Category:Bargue-Gérôme Drawing Course I", level:1},
+    // Lessons. Chosen by eye from contact sheets (tools/review.mjs): plates only, no text pages.
+    {cat:"bargue",  name:"Bargue · I, after casts",      source:"commons", query:"Category:Cours de dessin - estampe - (Charles Bargue) ; (avec le concours de Jean-Léon Gérôme) - btv1b52517498w", level:1.1, max:200, screen:"blank", snapshotOnly:true},   // every second scan is a blank back
+    {cat:"bargue",  name:"Bargue · II, after the masters", source:"commons", query:"Category:Cours de dessin - estampe - (Charles Bargue) ; (avec le concours de Jean-Léon Gérôme) - btv1b108855988", level:1.3},
+    {cat:"drawingbooks", name:"Cipriani · Rudiments of Drawing", source:"commons", query:"Category:Cipriani's Rudiments of Drawings", level:1, exclude:"Titelprent"},
+    {cat:"drawingbooks", name:"della Bella · I principii del disegno", source:"commons", query:"Category:I principii del disegno", level:1.1, exclude:"Frontispice|genius of drawing"},
+    {cat:"drawingbooks", name:"della Bella · Livre pour apprendre à dessiner", source:"commons", query:"Category:Livre pour apprendre à dessiner", level:1.1},
+    {cat:"drawingbooks", name:"Ars pictoria (1669)",     source:"commons", query:"Category:Ars pictoria (1669)", level:1.1},
+    {cat:"drawingbooks", name:"Academic drawing examples", source:"commons", query:"Category:Album met verschillende academische tekenvoorbeelden", level:1.2, exclude:"^Album|Titelprent"},
+    {cat:"drawingbooks", name:"American Drawing-Book (1847)", source:"commons", query:"Category:The American drawing-book - a manual for the amateur, and basis of study for the professional artist - especially adapted (1847)", level:1},
+    {cat:"construction", name:"Loomis · Head and Hands", source:"commons", query:"Category:Drawing the Head and Hands", level:1.1},
+    {cat:"construction", name:"Bridgman · Constructive Anatomy", source:"commons", query:"Category:Constructive Anatomy (1920)", level:1.3},
+    {cat:"firststeps", name:"Progressive Drawing-Book (1853)", source:"commons", query:"Category:The progressive drawing-book (1853)", level:1},
+    {cat:"firststeps", name:"Fairland · easy studies (1838)", source:"commons", query:"Category:Fairland's juvenile artist, or, Easy studies for beginners in drawing, of figures, animals, shipping, and landscape (1838)", level:1.1},
+    {cat:"casts",   name:"Tavenraat · academy studies",  source:"commons", query:"Category:Academic studies by Johannes Tavenraat", level:1.2},
+    {cat:"expression", name:"Le Brun · passions",        source:"commons", query:"Category:Expressions des Passions de l'Ame (RMA)", level:1.3, exclude:"Titelprent|Uitdrukkingen van de passies"},
+    {cat:"proportion", name:"Dürer · human proportion",  source:"commons", query:"Category:Vier bücher von menschlicher proportion", level:1.3},
+    {cat:"solids",  name:"Jamnitzer · regular bodies",   source:"commons", query:"Category:Perspectiva Corporum Regularium (RMA)", level:1.4, exclude:"^Perspectiva corporum regularium|Titel"},
+    // Anatomy & motion
     {cat:"anatomy", name:"Albinus · plates",             source:"commons", query:"Category:Tabulae sceleti et musculorum corporis humani", level:2, exclude:"folio|\\bpage|text|titel"},   // the plates, not the book scans
     {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:40},   // 30 subcategories, one sheet each
-    {cat:"anatomy", name:"Anatomical studies (AIC)",     source:"aic",     query:"anatomical study", type:"drawing|print", level:2},
-    {cat:"anatomy", name:"Écorchés (AIC)",               source:"aic",     query:"ecorche", type:"drawing|print|sculpture", level:2},
-    {cat:"anatomy", name:"Anatomical studies (Cleveland)",source:"cma",    query:"anatomical", type:"Drawing", level:2},
-    {cat:"hands",   name:"Drawings of hands",            source:"commons", query:"Category:Drawings of hands", level:1, calls:12},
-    {cat:"hands",   name:"Hand studies (AIC)",           source:"aic",     query:"study of hands", type:"drawing", level:1},
-    {cat:"hands",   name:"Hand studies (Cleveland)",     source:"cma",     query:"hands", type:"Drawing", level:1},
-    {cat:"heads",   name:"Head studies (AIC)",           source:"aic",     query:"head study", type:"drawing", medium:"chalk|charcoal|crayon|graphite|pencil", exclude:NO_SCENERY, level:1},
-    {cat:"heads",   name:"Heads (Cleveland)",            source:"cma",     query:"head of", type:"Drawing", exclude:NO_SCENERY, level:1},
+    {cat:"anatomy", name:"Salvage · the flayed gladiator", source:"commons", query:"Category:Anatomie du gladiateur combattant", level:2},
+    {cat:"gesture", name:"Muybridge · people in motion", source:"commons", query:"Category:Motion studies by Eadweard Muybridge", level:1.3, calls:12,
+      exclude:"Ziege|Dread|Hansel|Pferd|L[öo]we|Kamel|K[äa]nguru|Taube|Guanako|Hund|Katze|Hirsch|Vogel|Adler|Kakadu|Schwein|Ochse|B[üu]ffel|Waschb|Affe|Pavian|Elefant|Maultier|Esel|\\bKuh|horse|\\bdog|\\bcat\\b|lion|\\bbird|goat|deer|\\belk|bison|\\bpig|mule|\\box\\b|elephant|raccoon|kangaroo|pigeon|cockatoo|eagle|vulture|ostrich|tiger|jaguar|sloth|buffalo|donkey|baboon|camel|\\bcow|General view|track"},
+    // Master drawings. Free-text museum searches are noisy; `require` keeps what the title confirms.
+    {cat:"hands",   name:"Feet (Rijksmuseum)",           source:"commons", query:"Category:Drawings of feet in the Rijksmuseum Amsterdam", level:1.6},
+    {cat:"hands",   name:"Drawings of hands",            source:"commons", query:"Category:Drawings of hands", level:1.6, calls:12, exclude:"Puck|Alice|Jab[oó]n|Magic|Bandage|Fingeruhr|measure|MUNDO|Almanaque|\\bpalm|chirom|Kabbala|Tischsitte"},
+    {cat:"hands",   name:"Hand studies (AIC)",           source:"aic",     query:"study of hands", type:"drawing", require:"\\bhands?\\b|\\barms?\\b|fingers?", level:1.6},
+    {cat:"hands",   name:"Hand studies (Cleveland)",     source:"cma",     query:"hands", type:"Drawing", require:"\\bhands?\\b|\\barms?\\b|fingers?", exclude:"mirror", level:1.6},
+    {cat:"heads",   name:"Head studies (AIC)",           source:"aic",     query:"head study", type:"drawing", medium:"chalk|charcoal|crayon|graphite|pencil", require:"\\bheads?\\b|\\bface|profile", exclude:NO_SCENERY, level:1.6},
+    {cat:"heads",   name:"Heads (Cleveland)",            source:"cma",     query:"head of", type:"Drawing", require:"\\bheads?\\b|\\bface|profile", exclude:NO_SCENERY, level:1.6},
     {cat:"drapery", name:"Leonardo · drapery",           source:"commons", query:"Category:Drawings of drapery by Leonardo da Vinci", level:2},
-    {cat:"drapery", name:"Drapery studies (AIC)",        source:"aic",     query:"drapery study", type:"drawing", level:2},
-    {cat:"drapery", name:"Drapery studies (Cleveland)",  source:"cma",     query:"drapery", type:"Drawing", level:2},
-    // Figure
-    {cat:"gesture", name:"Muybridge · motion studies",   source:"commons", query:"Category:Motion studies by Eadweard Muybridge", level:1, calls:12},
-    {cat:"drawing", name:"Chalk figure studies",         source:"aic",     query:"chalk figure study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1},
-    {cat:"drawing", name:"Red chalk (sanguine)",         source:"aic",     query:"red chalk study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1},
-    {cat:"drawing", name:"Figure studies (Cleveland)",   source:"cma",     query:"figure study", type:"Drawing", exclude:NO_SCENERY, level:1},
-    {cat:"nude",    name:"Nude studies (AIC)",           source:"aic",     query:"nude study", type:"drawing", exclude:NO_SCENERY, level:1},
-    {cat:"nude",    name:"Nude studies (Cleveland)",     source:"cma",     query:"nude", type:"Drawing", exclude:NO_SCENERY, level:1},
+    {cat:"drapery", name:"Drapery studies (AIC)",        source:"aic",     query:"drapery study", type:"drawing", require:"draper|\\brobe|cloak|mantle|garment|\\bfolds?\\b", level:2},
+    {cat:"drapery", name:"Drapery studies (Cleveland)",  source:"cma",     query:"drapery", type:"Drawing", require:"draper|\\brobe|cloak|mantle|garment|\\bfolds?\\b", level:2},
+    {cat:"drawing", name:"Chalk figure studies",         source:"aic",     query:"chalk figure study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1.6},
+    {cat:"drawing", name:"Red chalk (sanguine)",         source:"aic",     query:"red chalk study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1.6},
+    {cat:"drawing", name:"Figure studies (Cleveland)",   source:"cma",     query:"figure study", type:"Drawing", require:"nude|figure|torso|\\bmale|female|\\bm[ae]n\\b|wom[ae]n|youth|\\bboy|\\bgirl|seated|standing|reclining|kneeling", exclude:NO_SCENERY, level:1.6},
+    {cat:"drawing", name:"Vanderpoel · the human figure", source:"commons", query:"Category:John Vanderpoel", require:"Human Figure|Drawing|Torse", level:1.6},
+    {cat:"nude",    name:"Nude studies (AIC)",           source:"aic",     query:"nude study", type:"drawing", require:"nude|bather|academ|torso", exclude:NO_SCENERY, level:1.6},
+    {cat:"nude",    name:"Nude studies (Cleveland)",     source:"cma",     query:"nude", type:"Drawing", require:"nude|bather|academ|torso", exclude:NO_SCENERY, level:1.6},
+    {cat:"studies", name:"Studies (Commons)",            source:"commons", query:"Category:Studies (drawings)", level:1.6, calls:12},
+    {cat:"studies", name:"Studies for paintings (AIC)",  source:"aic",     query:"study for", type:"drawing", level:1.6},
+    {cat:"studies", name:"Sketches (AIC)",               source:"aic",     query:"sketch", type:"drawing", level:1.6},
+    {cat:"studies", name:"Studies (Cleveland)",          source:"cma",     query:"study for", type:"Drawing", level:1.6},
     // Sketch to finish
-    {cat:"studies", name:"Studies (Commons)",            source:"commons", query:"Category:Studies (drawings)", level:1, calls:12},
-    {cat:"studies", name:"Studies for paintings (AIC)",  source:"aic",     query:"study for", type:"drawing", level:1},
-    {cat:"studies", name:"Sketches (AIC)",               source:"aic",     query:"sketch", type:"drawing", level:1},
-    {cat:"studies", name:"Studies (Cleveland)",          source:"cma",     query:"study for", type:"Drawing", level:1},
     {cat:"oilsketch", name:"Oil sketches (AIC)",         source:"aic",     query:"oil sketch", type:"painting", level:2},
     {cat:"oilsketch", name:"Oil sketches (Cleveland)",   source:"cma",     query:"oil sketch", type:"Painting", level:2},
     {cat:"composition", name:"Battles & history (AIC)",  source:"aic",     query:"battle", type:"painting", level:3},
@@ -326,8 +356,8 @@ const CONFIG = {
     {cat:"oil",     name:"Portraits in oil (AIC)",       source:"aic",     query:"portrait", type:"painting", medium:"oil", exclude:NO_SCENERY, level:2},
     {cat:"oil",     name:"Portraits in oil (Cleveland)", source:"cma",     query:"portrait", type:"Painting", exclude:NO_SCENERY, level:2},
     {cat:"oil",     name:"Figures in oil (AIC)",         source:"aic",     query:"woman", type:"painting", medium:"oil", exclude:NO_SCENERY, level:2},   // "figure" found 5; "woman" is how the titles read
-    {cat:"sculpture", name:"Marble & bronze (AIC)",      source:"aic",     query:"marble figure", type:"sculpture", level:1},
-    {cat:"sculpture", name:"Figures (Cleveland)",        source:"cma",     query:"figure", type:"Sculpture", level:1},
+    {cat:"sculpture", name:"Marble & bronze (AIC)",      source:"aic",     query:"marble figure", type:"sculpture", level:1.6},
+    {cat:"sculpture", name:"Figures (Cleveland)",        source:"cma",     query:"figure", type:"Sculpture", level:1.6},
     // Modern
     {cat:"colour",  name:"Landscape in oil (AIC)",       source:"aic",     query:"landscape", type:"painting", level:2},
     {cat:"colour",  name:"Landscape (Cleveland)",        source:"cma",     query:"landscape", type:"Painting", level:2},
@@ -355,13 +385,14 @@ const SIMPLER_TITLE = /\b(study|studies|studie|sketch|schets|esquisse|bozzetto|c
 const SIMPLE_MEDIUM = /chalk|graphite|pencil|charcoal|crayon|pen and|\bink\b|silverpoint|metalpoint|photograph|gelatin|albumen|collotype/i;
 const RICH_MEDIUM = /\boil\b|tempera|fresco|gouache|watercolou?r|pastel|woodblock/i;
 const CROWDED = /battle|triumph|massacre|judg?ement|last supper|procession|crowd|allegory|feast|wedding|entry into|adoration|crucifixion|apocalypse|inferno|paradiso|purgatorio|garden of|night watch|school of athens/i;
-function complexity(base, title, medium){
+function complexity(base, title, medium, lesson){
+  if (lesson) return Math.min(1.4, Math.max(1, base));   // made to be copied: the level is the lesson's place in the course
   let d = base;
   if (SIMPLER_TITLE.test(title)) d -= 0.5;
   if (SIMPLE_MEDIUM.test(medium)) d -= 0.3;
   if (RICH_MEDIUM.test(medium)) d += 0.2;
   if (CROWDED.test(title)) d += 0.6;
-  return Math.round(Math.min(3, Math.max(1, d)) * 10) / 10;
+  return Math.round(Math.min(3, Math.max(1.5, d)) * 10) / 10;   // a master drawing is never simpler than a lesson plate
 }
 
 const $ = id => document.getElementById(id);
@@ -386,7 +417,7 @@ const licenceOK = l => !l || isPD(l) || (CONFIG.licences === "pd+by" && isBY(l))
 const keywordIn = (k, f) => { if (k[0] === "~") return f.includes(k.slice(1));
   const e = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), edge = "[^a-z0-9à-ÿ]";   // word start; 1–2 letters: whole word
   return new RegExp(`(^|${edge})${e}${k.length <= 2 ? `(${edge}|$)` : ""}`).test(f); };
-const CATS = new Map(Object.entries(CONFIG.categories).map(([key, c]) => [key, {key, name:c.name, d:c.level, kw:c.keywords, group:c.group, about:c.about}]));
+const CATS = new Map(Object.entries(CONFIG.categories).map(([key, c]) => [key, {key, name:c.name, d:c.level, kw:c.keywords, group:c.group, about:c.about, lesson:!!c.lesson}]));
 function catForFolder(folder){
   const f = (folder || "").toLowerCase();
   for (const c of CATS.values()) if ((c.kw || []).some(k => keywordIn(k, f))) return c;
@@ -414,7 +445,7 @@ const htmlText = html => html ? (new DOMParser().parseFromString(String(html), "
 
 /* ---------- Source: Wikimedia Commons (category + subcategories, breadth-first) ---------- */
 const COMMONS = "https://commons.wikimedia.org/w/api.php";
-function commonsItem(pg, exclude){
+function commonsItem(pg, exclude, require){
   const ii = pg.imageinfo && pg.imageinfo[0]; if (!ii) return null;
   if (!/^image\/(jpeg|png|tiff|webp)$/.test(ii.mime || "")) return null;
   const url = ii.thumburl || ii.url; if (!safeUrl(url) || /\.tiff?$/i.test(url)) return null;
@@ -423,17 +454,18 @@ function commonsItem(pg, exclude){
   const fileTitle = pg.title.replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, "").replace(/_/g, " ");
   const title = clip(v("ObjectName") || fileTitle, 140);
   if (exclude && (exclude.test(title) || exclude.test(fileTitle))) return null;
+  if (require && !(require.test(title) || require.test(fileTitle))) return null;
   return {id:"c" + pg.pageid, url, title, maker: clip(v("Artist"), 80), year: clip(v("DateTimeOriginal"), 40), medium:"",
           link: safeUrl(ii.descriptionurl) || "https://commons.wikimedia.org/wiki/" + encodeURIComponent(pg.title), source:"Wikimedia Commons", licence: lic || "Public domain"};
 }
 async function loadCommons(set){
-  const out = [], seen = new Set(), visited = new Set(), maxCalls = set.calls || CONFIG.commonsCalls;
-  const exclude = rx([NO_FRONTMATTER, set.exclude].filter(Boolean).join("|"));
+  const out = [], seen = new Set(), visited = new Set(), maxCalls = set.calls || CONFIG.commonsCalls, max = set.max || CONFIG.maxPerSet;
+  const exclude = rx([NO_FRONTMATTER, set.exclude].filter(Boolean).join("|")), require = rx(set.require);
   let calls = 0, level = [set.query];
   for (let depth = 0; depth <= 2 && level.length; depth++){
     const nextLevel = [];
     for (const title of depth ? shuffle(level) : level){
-      if (visited.has(title) || calls >= maxCalls || out.length >= CONFIG.maxPerSet * 1.5) continue;
+      if (visited.has(title) || calls >= maxCalls || out.length >= max * 1.5) continue;
       visited.add(title);
       const files = []; let cont = {};
       do {
@@ -444,22 +476,22 @@ async function loadCommons(set){
         const r = await queue(() => getJSON(COMMONS + "?" + p)); calls++;
         for (const pg of (r.query && r.query.pages) || []){
           if (pg.ns === 14){ nextLevel.push(pg.title); continue; }
-          const it = commonsItem(pg, exclude); if (it && !seen.has(it.id)){ seen.add(it.id); files.push(it); }
+          const it = commonsItem(pg, exclude, require); if (it && !seen.has(it.id)){ seen.add(it.id); files.push(it); }
         }
         cont = r.continue;
-      } while (cont && calls < maxCalls && files.length < CONFIG.maxPerSet);
+      } while (cont && calls < maxCalls && files.length < max);
       // A small subcategory is usually one work in several scans: take one of them.
       out.push(...(depth > 0 && files.length <= 6 ? shuffle(files).slice(0, 1) : files));
     }
     level = nextLevel;
   }
-  return shuffle(out).slice(0, CONFIG.maxPerSet);
+  return shuffle(out).slice(0, max);
 }
 
 /* ---------- Source: Wikidata (SPARQL; images are Commons files, served at CONFIG.width) ---------- */
 const WDQS = "https://query.wikidata.org/sparql";
 async function loadWikidata(set){
-  const exclude = rx(set.exclude), seen = new Set(), out = [];
+  const exclude = rx(set.exclude), require = rx(set.require), seen = new Set(), out = [];
   const r = await queue(() => getJSON(WDQS + "?" + new URLSearchParams({query:set.query, format:"json"}), 2, CONFIG.wikidataTimeout));
   for (const b of (r.results && r.results.bindings) || []){
     const item = b.item && b.item.value, img = b.image && b.image.value; if (!item || !img || seen.has(item)) continue;
@@ -467,7 +499,7 @@ async function loadWikidata(set){
     if (!/\.(jpe?g|png|webp)$/i.test(file)) continue;
     seen.add(item);
     const title = clip((b.itemLabel && b.itemLabel.value) || file.replace(/\.[a-z0-9]+$/i, ""), 140);
-    if (/^Q\d+$/.test(title) || (exclude && exclude.test(title))) continue;
+    if (/^Q\d+$/.test(title) || (exclude && exclude.test(title)) || (require && !require.test(title))) continue;
     out.push({id:"w" + item.split("/").pop(), url:`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${CONFIG.width}`,
       title, maker: clip(b.creatorLabel && b.creatorLabel.value, 80), year: clip(b.year && b.year.value, 40), medium:"oil",
       link:`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file)}`, source: set.sourceName || "Wikimedia Commons", licence:"Public domain"});
@@ -478,7 +510,7 @@ async function loadWikidata(set){
 /* ---------- Source: Art Institute of Chicago (search, public domain, IIIF images) ---------- */
 const AIC = "https://api.artic.edu/api/v1/artworks/search";
 async function loadAIC(set){
-  const type = rx(set.type), medium = rx(set.medium), style = rx(set.style), exclude = rx(set.exclude), loose = [], strict = [];
+  const type = rx(set.type), medium = rx(set.medium), style = rx(set.style), exclude = rx(set.exclude), require = rx(set.require), loose = [], strict = [];
   for (let page = 1; page <= CONFIG.aicPages; page++){
     const p = new URLSearchParams({q:set.query, "query[term][is_public_domain]":"true", limit:"100", page:String(page),
       fields:"id,title,artist_title,artist_display,date_display,image_id,is_public_domain,classification_title,artwork_type_title,medium_display,style_titles,subject_titles"});
@@ -489,6 +521,7 @@ async function loadAIC(set){
       if (type && !type.test(`${a.artwork_type_title || ""} ${a.classification_title || ""}`)) continue;
       if (medium && !medium.test(`${a.medium_display || ""} ${a.classification_title || ""}`)) continue;
       if (exclude && exclude.test(a.title || "")) continue;
+      if (require && !require.test(a.title || "")) continue;
       const it = {id:"a" + a.id, url:`${iiif}/${encodeURIComponent(a.image_id)}/full/${CONFIG.aicWidth},/0/default.jpg`, title: clip(a.title || "Untitled", 140),
         maker: clip(a.artist_title || String(a.artist_display || "").split("\n")[0], 80), year: clip(a.date_display, 40), medium: String(a.medium_display || ""),
         link:`https://www.artic.edu/artworks/${encodeURIComponent(a.id)}`, source:"Art Institute of Chicago", licence:"Public domain"};
@@ -503,7 +536,7 @@ async function loadAIC(set){
 /* ---------- Source: Cleveland Museum of Art (open access, CC0) ---------- */
 const CMA = "https://openaccess-api.clevelandart.org/api/artworks/";
 async function loadCMA(set){
-  const medium = rx(set.medium), exclude = rx(set.exclude), out = [];
+  const medium = rx(set.medium), exclude = rx(set.exclude), require = rx(set.require), out = [];
   let useType = !!set.type, typeRx = set.type ? new RegExp("^" + set.type, "i") : null;
   for (let page = 0; page < CONFIG.cmaPages; page++){
     const p = new URLSearchParams({q:set.query, cc0:"1", has_image:"1", limit:"100", skip:String(page * 100)});
@@ -518,6 +551,7 @@ async function loadCMA(set){
       if (typeRx && !typeRx.test(a.type || "")) continue;
       if (medium && !medium.test(`${a.technique || ""} ${a.type || ""}`)) continue;
       if (exclude && exclude.test(a.title || "")) continue;
+      if (require && !require.test(a.title || "")) continue;
       const maker = ((a.creators && a.creators[0] && a.creators[0].description) || "").replace(/\s*\(.*$/, "");
       out.push({id:"m" + a.id, url, title: clip(a.title || "Untitled", 140), maker: clip(maker, 80), year: clip(a.creation_date, 40), medium: String(a.technique || ""),
         link: safeUrl(a.url) || `https://www.clevelandart.org/art/${encodeURIComponent(a.accession_number || a.id)}`, source:"Cleveland Museum of Art", licence:"CC0"});
@@ -535,28 +569,30 @@ let local = [];                                    // your own images
 const prefs = store.get("sk3:prefs") || {};
 const rejected = new Set(store.get("sk3:rejected") || store.get("sk2:rejected") || store.get("sk1:rejected") || []);
 const selected = new Set((prefs.selected || CONFIG.defaults).filter(k => CATS.has(k)));
-const cacheKey = set => "sk3:set:" + JSON.stringify([set.source, set.query, set.type, set.medium, set.style, set.exclude, set.calls, CONFIG.licences, CONFIG.width, CONFIG.aicWidth, CONFIG.maxPerSet]);
+const cacheKey = set => "sk3:set:" + JSON.stringify([set.source, set.query, set.type, set.medium, set.style, set.exclude, set.calls, CONFIG.licences, CONFIG.width, CONFIG.aicWidth, CONFIG.maxPerSet,
+  ...(set.require ? ["require", set.require] : []), ...(set.max ? ["max", set.max] : []), ...(set.screen ? ["screen", set.screen] : [])]);   // newer fields only when used, so older keys stay valid
 const busy = st => st.status === "loading";
 let snapshotDate = null;
 function applySet(st, raw, status, quiet){
-  const base = st.set.level || CATS.get(st.set.cat).d;
-  st.items = raw.map(o => ({...o, ck: st.set.cat, d: complexity(base, o.title, o.medium || ""), grp: st.set.name, src:"web"}));
+  const cat = CATS.get(st.set.cat), base = st.set.level || cat.d;
+  st.items = raw.map(o => ({...o, ck: st.set.cat, d: complexity(base, o.title, o.medium || "", cat.lesson), grp: st.set.name, src:"web"}));
   st.status = raw.length ? status : "empty"; if (!quiet) refresh();
 }
-async function loadSet(st, fresh){
+async function loadSet(st, fresh, tool){
   if (busy(st) || (!fresh && (st.status === "ok" || st.status === "empty"))) return;
-  const key = cacheKey(st.set), c = !fresh && store.get(key);
+  if (st.set.snapshotOnly && !tool){ if (st.status !== "ok"){ st.status = "snapshot"; refresh(); } return; }   // needs a look at the images that only the snapshot tool can take
+  const key = cacheKey(st.set), c = !fresh && !tool && store.get(key);
   if (c && c.items && Date.now() - c.t < CONFIG.cacheHours * 36e5) return applySet(st, c.items, "ok");
   st.status = "loading"; refresh();
   try {
     const raw = await LOADERS[st.set.source](st.set);
-    if (raw.length) store.set(key, {t: Date.now(), items: raw});
+    if (raw.length && !tool) store.set(key, {t: Date.now(), items: raw});
     applySet(st, raw, "ok");
   } catch (e){ st.status = "error"; st.err = e.message || String(e); refresh(); }
 }
 const loadCategory = k => Promise.all(sets.filter(st => st.set.cat === k).map(st => loadSet(st)));
 const loadSelected = () => Promise.all([...selected].map(loadCategory));
-const loadAll = () => Promise.all(sets.map(st => loadSet(st)));
+const loadAll = tool => Promise.all(sets.map(st => loadSet(st, false, tool === true)));   // tool: the snapshot tool, which also loads the snapshot-only sets
 // The weekly snapshot (sets.json) fills every set at once; a newer live fetch on this device wins.
 async function seedFromSnapshot(){
   if (!CONFIG.snapshot) return;
@@ -681,7 +717,7 @@ function renderSets(){
     if (st.set.cat !== lastCat){ lastCat = st.set.cat; const c = CATS.get(lastCat), h = document.createElement("h4"); h.innerHTML = `${esc(c.name)}<span>${esc(c.about || "")}</span>`; el.appendChild(h); }
     const row = document.createElement("div"); row.className = "set";
     const n = st.items.filter(x => !rejected.has(x.id)).length;
-    const state = {idle:"not loaded", loading:"loading…", ok:plural(n, "image"), empty:"0 images: this search set returns nothing", error:`failed: ${st.err}`}[st.status];
+    const state = {idle:"not loaded", loading:"loading…", ok:plural(n, "image"), empty:"0 images: this search set returns nothing", error:`failed: ${st.err}`, snapshot:"comes with the weekly snapshot only"}[st.status];
     row.innerHTML = `<div><b>${esc(st.set.name)}</b> <span class="status${st.status === "error" || st.status === "empty" ? " err" : ""}">${esc(state)}</span><div class="q">${esc(st.set.source)} · ${esc(clip(st.set.query, 90))} · n${st.set.level}</div></div>`;
     const b = document.createElement("button"); b.className = "btn small"; b.textContent = revSet === i ? "Hide" : "Show 20"; b.dataset.set = i;
     b.disabled = !st.items.length; b.onclick = () => { revSet = revSet === i ? null : i; if (revSet !== null && !st.sample) st.sample = shuffle(st.items.slice()).slice(0, 20); renderSets(); renderReview(); };
@@ -708,7 +744,7 @@ $("copyVerdict").onclick = async () => {
   const lines = [`Schetsklok · verdict ${new Date().toISOString().slice(0, 10)}`];
   for (const st of sets){
     const seen = st.sample || [], no = seen.filter(x => rejected.has(x.id));
-    const found = {idle:"not loaded", loading:"loading", error:`failed (${st.err})`, empty:"0 found"}[st.status] || `${st.items.length} found`;
+    const found = {idle:"not loaded", loading:"loading", error:`failed (${st.err})`, empty:"0 found", snapshot:"snapshot only"}[st.status] || `${st.items.length} found`;
     lines.push(`\n${st.set.name} (${st.set.source}: ${clip(st.set.query, 60)}): ${found}, ` + (seen.length ? `${seen.length} reviewed, ${no.length} rejected` : "not reviewed"));
     for (const x of no) lines.push(`  ✕ ${x.title} — ${x.maker || "?"} · ${x.link}`);
   }
@@ -716,7 +752,7 @@ $("copyVerdict").onclick = async () => {
   try { await navigator.clipboard.writeText(text); $("keurStatus").textContent = "Verdict copied."; $("verdictOut").hidden = true; }
   catch { $("verdictOut").value = text; $("verdictOut").hidden = false; $("verdictOut").select(); $("keurStatus").textContent = "Copying failed; select the text below."; }
 };
-$("loadAllBtn").onclick = loadAll;
+$("loadAllBtn").onclick = () => loadAll();
 $("refetch").onclick = () => { for (const st of sets) st.sample = null; revSet = null; renderReview(); Promise.all(sets.filter(st => st.status !== "idle").map(st => loadSet(st, true))); };
 
 /* ---------- Building a session ----------
@@ -957,9 +993,9 @@ if (prefs.brk != null) $("optBreak").checked = prefs.brk;
 if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
 // For tests, the snapshot tool and the curious.
-const VERSION = "2026-11-20c"; $("version").textContent = VERSION;
+const VERSION = "2026-11-21"; $("version").textContent = VERSION;
 window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, keyOf: cacheKey, session: () => S,
-  probe: async set => (await LOADERS[set.source](set)).map(o => ({...o, d: complexity(set.level || 1, o.title, o.medium || "")})),   // one set, fetched live, nothing stored (tools/review.mjs)
+  probe: async set => (await LOADERS[set.source](set)).map(o => ({...o, d: complexity(set.level || 1.6, o.title, o.medium || "", !!(CATS.get(set.cat) || {}).lesson)})),   // one set, fetched live, nothing stored (tools/review.mjs)
   catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
 
 renderPlans(); refresh();

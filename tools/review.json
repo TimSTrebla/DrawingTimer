@@ -1,389 +1,86 @@
 {
- "searches": [
-  "Drawings of hands in the Rijksmuseum Amsterdam",
-  "Drawings of heads in the Rijksmuseum Amsterdam",
-  "Drawings of nudes in the Rijksmuseum Amsterdam",
-  "Drawings of human figures in the Rijksmuseum",
-  "Drawings of arms",
-  "Drawings of legs",
-  "Drawings of torsos",
-  "Drawings of human hands",
-  "Studies of hands",
-  "Studies of heads",
-  "Head studies drawings",
-  "Tekenvoorbeeld",
-  "Teekenvoorbeelden",
-  "Academiestudie",
-  "Academy studies Rijksmuseum",
-  "Drawings after sculptures",
-  "Drawings of sculptures in the Rijksmuseum",
-  "Drawings of plaster casts",
-  "Principes du dessin",
-  "Livre de principes de dessin",
-  "Recueil de têtes",
-  "Études prises dans le bas peuple",
-  "Bouchardon",
-  "drawing models prints",
-  "Charles Le Brun têtes",
-  "Drawings of drapery",
-  "Drawings of faces",
-  "Drawings of men in the Rijksmuseum",
-  "Drawings of women in the Rijksmuseum",
-  "Drawings of children in the Rijksmuseum",
-  "Academic drawings of male nudes",
-  "Male nude drawings 18th century",
-  "Figure drawings academy 19th century",
-  "Écorché drawings",
-  "Houdon écorché drawings",
-  "anatomical drawings for artists"
- ],
+ "searches": [],
  "books": [],
  "candidates": [
   {
-   "name": "Bargue · course (BnF, 154)",
+   "name": "Head by geometry · Nouvelle méthode (BnF)",
    "source": "commons",
-   "query": "Category:Cours de dessin - estampe - (Charles Bargue) ; (avec le concours de Jean-Léon Gérôme) - btv1b52517498w",
-   "level": 1
+   "query": "Category:Nouvelle méthode appliquée aux principes élémentaires du dessin, tendant à perfectionner graphiquement le tracé de la tête de l'homme au moyen de diverses figures géométriques - par Jean Jacques... - btv1b53164048z",
+   "level": 1.2
   },
   {
-   "name": "Bargue · course (BnF, 66)",
+   "name": "Horses, progressive plates · Roulliet (BnF)",
    "source": "commons",
-   "query": "Category:Cours de dessin - estampe - (Charles Bargue) ; (avec le concours de Jean-Léon Gérôme) - btv1b108855988",
-   "level": 1
+   "query": "Category:Le Gericault des ateliers ou Abrégé élémentaire du dessin pour l'étude des chevaux - contenant 20 planches de principes progressifs, à l'usage des élèves - par A. Roulliet - btv1b525000474",
+   "level": 1.2
   },
   {
-   "name": "Bargue · recueil (BnF)",
+   "name": "Flowers, progressive plates · Redouté des dames (BnF)",
    "source": "commons",
-   "query": "Category:Recueil. Oeuvre de Charles Bargue - btv1b72003680",
-   "level": 1
+   "query": "Category:Le Redouté des dames, ou Abrégé élémentaire du dessin des fleurs et fruits contenant 18 planches de principes progressifs, depuis le trait simple jusqu'aux premières notions d'aquarelle - par Jules... - btv1b52503970p",
+   "level": 1.2
   },
   {
-   "name": "Julien · prints (Rijksmuseum)",
+   "name": "Hands · Rijksmuseum drawings",
    "source": "commons",
-   "query": "Category:Prints by Bernard-Romain Julien in the Rijksmuseum Amsterdam",
-   "level": 1
+   "query": "Category:Drawings of hands in the Rijksmuseum Amsterdam",
+   "level": 1.6
   },
   {
-   "name": "Julien · all",
+   "name": "Hands · Italian drawings (Cooper Hewitt)",
    "source": "commons",
-   "query": "Category:Bernard-Romain Julien",
-   "level": 1
+   "query": "Category:Drawings from Italy in the Cooper–Hewitt, Smithsonian Design Museum - Hands",
+   "level": 1.6
   },
   {
-   "name": "Bloemaert · tekenboek",
+   "name": "Heads · Italian drawings (Cooper Hewitt)",
    "source": "commons",
-   "query": "Category:Oorspronkelyk en vermaard konstryk tekenboek",
-   "level": 1
+   "query": "Category:Drawings from Italy in the Cooper–Hewitt, Smithsonian Design Museum - Human head",
+   "level": 1.6
   },
   {
-   "name": "Academische tekenvoorbeelden",
+   "name": "Feet · Commons drawings",
    "source": "commons",
-   "query": "Category:Album met verschillende academische tekenvoorbeelden",
-   "level": 1
+   "query": "Category:Drawings of feet",
+   "level": 1.6
   },
   {
-   "name": "Jean Cousin · Livre de pourtraiture",
+   "name": "Skulls · Commons drawings",
    "source": "commons",
-   "query": "Category:Livre de pourtraiture de maistre Jean Cousin (1595)",
-   "level": 1
+   "query": "Category:Drawings of human skulls",
+   "level": 1.6
   },
   {
-   "name": "Manuel de dessin primaire (1912)",
+   "name": "Nudes · Rijksmuseum drawings",
    "source": "commons",
-   "query": "Category:Manuel de dessin à l'usage de l'enseignement primaire (1912)",
-   "level": 1
+   "query": "Category:Nude drawings in the Rijksmuseum Amsterdam",
+   "level": 1.6
   },
   {
-   "name": "Progressive drawing-book (1853)",
+   "name": "After sculpture · Rijksmuseum drawings",
    "source": "commons",
-   "query": "Category:The progressive drawing-book (1853)",
-   "level": 1
+   "query": "Category:Drawings of sculptures in the Rijksmuseum Amsterdam",
+   "level": 1.4
   },
   {
-   "name": "First book of drawing (1840)",
+   "name": "Belvedere Torso · drawings",
    "source": "commons",
-   "query": "Category:First book of drawing - being exercises for children (1840)",
-   "level": 1
+   "query": "Category:Drawings of Belvedere Torso",
+   "level": 1.4
   },
   {
-   "name": "Lutz · Drawing made easy (1921)",
+   "name": "Anatomical drawings · Rijksmuseum",
    "source": "commons",
-   "query": "Category:Drawing made easy - a helpful book for young artists; the way to begin and finish your sketches, clearly shown step by step (1921)",
-   "level": 1
+   "query": "Category:Anatomical drawings in the Rijksmuseum Amsterdam",
+   "level": 2
   },
   {
-   "name": "Lutz · What to draw (1913)",
+   "name": "Male nudes, 19th century · drawings",
    "source": "commons",
-   "query": "Category:What to draw and how to draw it (1913)",
-   "level": 1
-  },
-  {
-   "name": "Drawing for Beginners (1920)",
-   "source": "commons",
-   "query": "Category:Drawing for Beginners (1920)",
-   "level": 1
-  },
-  {
-   "name": "Loomis · Head and Hands",
-   "source": "commons",
-   "query": "Category:Drawing the Head and Hands",
-   "level": 1
-  },
-  {
-   "name": "Bridgman · Constructive Anatomy",
-   "source": "commons",
-   "query": "Category:Constructive Anatomy (1920)",
-   "level": 1
-  },
-  {
-   "name": "Vanderpoel",
-   "source": "commons",
-   "query": "Category:John Vanderpoel",
-   "level": 1
-  },
-  {
-   "name": "Fairland · juvenile artist (1838)",
-   "source": "commons",
-   "query": "Category:Fairland's juvenile artist, or, Easy studies for beginners in drawing, of figures, animals, shipping, and landscape (1838)",
-   "level": 1
-  },
-  {
-   "name": "American drawing-book (1847)",
-   "source": "commons",
-   "query": "Category:The American drawing-book - a manual for the amateur, and basis of study for the professional artist - especially adapted (1847)",
-   "level": 1
-  },
-  {
-   "name": "Cipriani · Rudiments",
-   "source": "commons",
-   "query": "Category:Cipriani's Rudiments of Drawings",
-   "level": 1
-  },
-  {
-   "name": "I principii del disegno",
-   "source": "commons",
-   "query": "Category:I principii del disegno",
-   "level": 1
-  },
-  {
-   "name": "Livre pour apprendre à dessiner",
-   "source": "commons",
-   "query": "Category:Livre pour apprendre à dessiner",
-   "level": 1
-  },
-  {
-   "name": "L'art du dessin démontré (1790)",
-   "source": "commons",
-   "query": "Category:L'art du dessin démontre d'une manière claire et précise (1790)",
-   "level": 1
-  },
-  {
-   "name": "Le crayon et ses fantaisies (1896)",
-   "source": "commons",
-   "query": "Category:Le crayon et ses fantaisies, sanguine, crayon noir, crayon blanc (1896)",
-   "level": 1
-  },
-  {
-   "name": "Ars pictoria (1669)",
-   "source": "commons",
-   "query": "Category:Ars pictoria (1669)",
-   "level": 1
-  },
-  {
-   "name": "Fialetti · prints",
-   "source": "commons",
-   "query": "Category:Prints by Odoardo Fialetti",
-   "level": 1
-  },
-  {
-   "name": "Preissler",
-   "source": "commons",
-   "query": "Category:Johann Daniel Preissler",
-   "level": 1
-  },
-  {
-   "name": "Le Brun · expressions (Rijksmuseum)",
-   "source": "commons",
-   "query": "Category:Expressions des Passions de l'Ame (RMA)",
-   "level": 1
-  },
-  {
-   "name": "Tête d'expression",
-   "source": "commons",
-   "query": "Category:Tête d'expression",
-   "level": 1
-  },
-  {
-   "name": "Eyes",
-   "source": "commons",
-   "query": "Category:Drawings of human eyes",
-   "level": 1
-  },
-  {
-   "name": "Noses",
-   "source": "commons",
-   "query": "Category:Drawings of human noses",
-   "level": 1
-  },
-  {
-   "name": "Ears",
-   "source": "commons",
-   "query": "Category:Drawings of human ears",
-   "level": 1
-  },
-  {
-   "name": "Feet (Rijksmuseum)",
-   "source": "commons",
-   "query": "Category:Drawings of feet in the Rijksmuseum Amsterdam",
-   "level": 1
-  },
-  {
-   "name": "Richer · Anatomie artistique",
-   "source": "commons",
-   "query": "Category:Anatomie artistique (Paul Richer)",
-   "level": 1
-  },
-  {
-   "name": "Richer · Nouvelle anatomie (1910)",
-   "source": "commons",
-   "query": "Category:Nouvelle anatomie artistique 1 (1910)",
-   "level": 1
-  },
-  {
-   "name": "Salvage · gladiateur",
-   "source": "commons",
-   "query": "Category:Anatomie du gladiateur combattant",
-   "level": 1
-  },
-  {
-   "name": "Handbook of anatomy for art students",
-   "source": "commons",
-   "query": "Category:A handbook of anatomy for art students",
-   "level": 1
-  },
-  {
-   "name": "Crane · Line and Form",
-   "source": "commons",
-   "query": "Category:Line and Form images",
-   "level": 1
-  },
-  {
-   "name": "Jamnitzer · solids (Rijksmuseum)",
-   "source": "commons",
-   "query": "Category:Perspectiva Corporum Regularium (RMA)",
-   "level": 1
-  },
-  {
-   "name": "Cassagne · perspective (1873)",
-   "source": "commons",
-   "query": "Category:Traité pratique de perspective appliquée au dessin artistique et industriel (1873)",
-   "level": 1
-  },
-  {
-   "name": "Perspective and geometrical drawing (1887)",
-   "source": "commons",
-   "query": "Category:Perspective and geometrical drawing, 1887",
-   "level": 1
-  },
-  {
-   "name": "Dürer · proportion",
-   "source": "commons",
-   "query": "Category:Vier bücher von menschlicher proportion",
-   "level": 1
-  },
-  {
-   "name": "Male proportions",
-   "source": "commons",
-   "query": "Category:Male human proportions",
-   "level": 1
-  },
-  {
-   "name": "Hokusai manga",
-   "source": "commons",
-   "query": "Category:Hokusai manga",
-   "level": 1,
-   "calls": 20
-  },
-  {
-   "name": "Mustard Seed Garden",
-   "source": "commons",
-   "query": "Category:Manual of the Mustard Seed Garden",
-   "level": 1
-  },
-  {
-   "name": "Academic nudes",
-   "source": "commons",
-   "query": "Category:Academic nudes",
-   "level": 1
-  },
-  {
-   "name": "Nude in art academies",
-   "source": "commons",
-   "query": "Category:Study of the nude in art academies",
-   "level": 1
-  },
-  {
-   "name": "Tavenraat · academic studies",
-   "source": "commons",
-   "query": "Category:Academic studies by Johannes Tavenraat",
-   "level": 1
-  },
-  {
-   "name": "Cambiaso · drawings",
-   "source": "commons",
-   "query": "Category:Drawings by Luca Cambiaso",
-   "level": 1
-  },
-  {
-   "name": "Villard de Honnecourt",
-   "source": "commons",
-   "query": "Category:Sketchbook of Villard de Honnecourt",
-   "level": 1
-  },
-  {
-   "name": "Animals · tels qu'ils sont",
-   "source": "commons",
-   "query": "Category:Les Animaux tels qu'ils sont",
-   "level": 1
-  },
-  {
-   "name": "Animals · artistic anatomy",
-   "source": "commons",
-   "query": "Category:Artistic anatomy of animals",
-   "level": 1
-  },
-  {
-   "name": "Leonardo · Traité de la peinture",
-   "source": "commons",
-   "query": "Category:Illustrations for Léonard Traité élémentaire de la peinture",
-   "level": 1
-  },
-  {
-   "name": "Goeree · menschkunde",
-   "source": "commons",
-   "query": "Category:Natuurlyk en schilderkonstig ontwerp der menschkunde",
-   "level": 1
+   "query": "Category:19th-century nude drawings of males",
+   "level": 1.6
   }
  ],
- "existing": "^(bargue|hands|heads|drapery|gesture|drawing|nude|studies|anatomy)$",
- "trees": [
-  "Category:Drawings in the Rijksmuseum Amsterdam",
-  "Category:Drawings in the Rijksmuseum Amsterdam by subject",
-  "Category:Drawings of people in the Rijksmuseum Amsterdam",
-  "Category:Drawings of hands",
-  "Category:Drawings of human body parts",
-  "Category:Drawings of heads",
-  "Category:Drawings of human heads",
-  "Category:Drawings of the human body",
-  "Category:Academic studies",
-  "Category:Stefano della Bella",
-  "Category:Tekenvoorbeelden",
-  "Category:Model books",
-  "Category:Drawings of nudes",
-  "Category:Drawings of male nudes",
-  "Category:Drawings of nude men",
-  "Category:Prints of drawing examples",
-  "Category:Art academies in art",
-  "Category:Studies (drawings)"
- ]
+ "existing": "^(bargue|drawingbooks|construction|firststeps|casts|expression|proportion|solids|gesture|anatomy|hands|heads|drapery|drawing|nude)$",
+ "trees": []
 }

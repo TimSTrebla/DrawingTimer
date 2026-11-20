@@ -43,7 +43,8 @@ function commons(url) {
   let pages = [], next = null;
   if (depth === 0) {
     if (!cont) {
-      pages = Array.from({ length: 40 }, (_, i) => file(t, i));
+      // one category mixes its subject with other files, so `require` has something to keep and something to drop
+      pages = Array.from({ length: 40 }, (_, i) => file(t, i, /Vanderpoel/.test(t) ? { title: i % 2 ? `The Human Figure, plate ${i}` : `Portrait photograph ${i}` } : {}));
       pages.push(file(t, "svg", { mime: "image/svg+xml", ext: ".svg" }), file(t, "bysa", { lic: "CC BY-SA 4.0" }), file(t, "tif", { mime: "image/tiff", ext: ".tif", tif: true }),
                  file(t, "ccby", { lic: "CC BY 4.0" }), file(t, "blank", { title: "Folio 003r blank" }));
       pages.push(...[1, 2, 3].map(k => ({ pageid: ++pid, ns: 14, title: `${t}/sub${k}` })));
@@ -84,7 +85,7 @@ function aic(url) {
   const base = ki * 20000 + (hash(q) % 97) * 100 + (page - 1) * 100;   // each query its own id range; a rare overlap exercises de-duplication
   const data = Array.from({ length: 100 }, (_, k) => {
     const i = base + k, id = 9000 + i;
-    const a = { id, title: `Study ${i}`, artist_title: "Jean-Antoine Watteau", artist_display: "Jean-Antoine Watteau\nFrench, 1684–1721",
+    const a = { id, title: `Study of ${q} ${i}`, artist_title: "Jean-Antoine Watteau", artist_display: "Jean-Antoine Watteau\nFrench, 1684–1721",
       date_display: "c. 1715", image_id: `img-${id}`, is_public_domain: true, classification_title: kind[0].toLowerCase(),
       artwork_type_title: kind[0], medium_display: kind[1], style_titles: [], subject_titles: [] };
     if (i % 5 === 0) { a.artwork_type_title = "Print"; a.classification_title = "etching"; a.medium_display = "Etching on paper"; }
@@ -107,7 +108,7 @@ function cma(url) {
   const types = ["Drawing", "Painting", "Print", "Sculpture"];
   let data = Array.from({ length: 100 }, (_, k) => {
     const i = (hash(q) % 5) * 41 + skip + k, id = 50000 + i;
-    const a = { id, accession_number: `1920.${i}`, title: `Work ${i}`, creation_date: "1880", creators: [{ description: "Edgar Degas (French, 1834–1917)" }],
+    const a = { id, accession_number: `1920.${i}`, title: `${q} work ${i}`, creation_date: "1880", creators: [{ description: "Edgar Degas (French, 1834–1917)" }],
       type: types[i % 4], technique: i % 3 ? "pastel on paper" : "black chalk", url: `https://clevelandart.org/art/1920.${i}`, share_license_status: "CC0",
       images: { web: { url: `https://openaccess-cdn.clevelandart.org/1920.${i}/${broken("m" + i) ? "BROKEN_" : ""}1920.${i}_web.jpg` } } };
     if (i % 6 === 0) a.share_license_status = "Copyrighted";
@@ -153,7 +154,7 @@ await page.route("**/*", route => {
   }
   unknown.push(u); return route.abort();
 });
-const settled = cats => page.waitForFunction(cs => window.schetsklok.sets.filter(s => cs.includes(s.set.cat)).every(s => ["ok", "error", "empty"].includes(s.status)), cats, { timeout: 30000 });
+const settled = cats => page.waitForFunction(cs => window.schetsklok.sets.filter(s => cs.includes(s.set.cat)).every(s => ["ok", "error", "empty", "snapshot"].includes(s.status)), cats, { timeout: 30000 });
 const setsOf = cats => page.evaluate(cs => window.schetsklok.sets.filter(s => cs.includes(s.set.cat)).map(s => ({ name: s.set.name, cat: s.set.cat, source: s.set.source, status: s.status, n: s.items.length, items: s.items })), cats);
 const pressed = () => page.$$eval(".chip[data-cat]", els => els.filter(e => e.getAttribute("aria-pressed") === "true").map(e => e.dataset.cat));
 
@@ -171,7 +172,11 @@ on = await pressed();
 check(on.length === catKeys.length - 3, `${on.length} categories ticked for the review`);
 await settled(on);
 const info = await setsOf(on);
-for (const s of info) check(s.status === "ok" && s.n > 0, `${s.name} (${s.source}): ${s.status}, ${s.n} images`);
+for (const s of info) if (s.status !== "snapshot") check(s.status === "ok" && s.n > 0, `${s.name} (${s.source}): ${s.status}, ${s.n} images`);
+const snapOnly = info.filter(s => s.status === "snapshot").map(s => s.name);
+check(snapOnly.join() === "Bargue · I, after casts", `a set that needs its images screened waits for the snapshot (${snapOnly.join(", ")})`);
+const groups = await page.$$eval("#cats .group .lbl", els => els.map(e => e.textContent));
+check(groups[0] === "Lessons" && groups.indexOf("Master drawings") > groups.indexOf("Lessons"), `lessons come first on the page: ${groups.join(" · ")}`);
 const idle = await page.evaluate(() => window.schetsklok.sets.filter(s => s.status === "idle").map(s => s.set.cat));
 check(idle.length > 0 && idle.every(c => ["colour", "watercolour", "ai"].includes(c)), `lazy loading: only sets of unticked categories untouched (${idle.length})`);
 check(await page.isEnabled("#startBtn"), "start button enabled once enough has arrived");
@@ -201,11 +206,16 @@ check(wd.length === 2 && wd.every(s => s.n === 48), `Wikidata: duplicates and TI
 const rijksItems = wd.find(s => s.cat === "rijks").items;
 check(rijksItems.every(x => x.source === "Rijksmuseum · via Wikimedia" && /Special:FilePath\/.*width=1920/.test(x.url) && /commons\.wikimedia\.org\/wiki\/File:/.test(x.link)), "Rijksmuseum items: source label, 1920-wide Commons image, link to the file page");
 check(all.filter(x => x.source === "Art Institute of Chicago").every(x => /\/full\/1686,\//.test(x.url)), "AIC images asked for at 1686 px");
-check(!info.filter(s => s.cat === "anatomy").some(s => /Vesalius/.test(s.name)), "Vesalius book scans are gone from Anatomy");
+check(!info.some(s => /Vesalius|Écorchés \(AIC\)|Anatomical studies \(AIC\)/.test(s.name)), "book scans and the off-topic Art Institute anatomy searches are gone");
+const handsAic = info.find(s => s.name === "Hand studies (AIC)").items;
+check(handsAic.length > 0 && handsAic.every(x => /hands?|arms?/i.test(x.title)), `require keeps a museum search on its subject (${handsAic.length} hand studies, all titled so)`);
+const lessonD = all.filter(x => ["bargue", "drawingbooks", "construction", "firststeps", "casts", "expression", "proportion", "solids", "gesture"].includes(x.ck)).map(x => x.d);
+const masterD = all.filter(x => ["hands", "heads", "drawing", "nude", "studies", "drapery"].includes(x.ck)).map(x => x.d);
+check(lessonD.length > 100 && Math.max(...lessonD) <= 1.4 && Math.min(...masterD) >= 1.5, `lesson plates score ${Math.min(...lessonD)}–${Math.max(...lessonD)}, master drawings ${Math.min(...masterD)}–${Math.max(...masterD)}`);
 const nw = rijksItems.find(x => x.title === "The Night Watch");
 check(nw && nw.d === 3, `famous crowded scene scores 3 (Night Watch: ${nw && nw.d})`);
-const cx = await page.evaluate(() => { const c = window.schetsklok.complexity; return [c(2, "Study for a figure", "black chalk"), c(2, "Portrait of a man", "oil on canvas"), c(1, "Battle of Anghiari", "pen and ink"), c(3, "Plate 9", "")]; });
-check(cx.join() === "1.2,2.2,1.3,3", `complexity nudges: study+chalk 1.2 · oil 2.2 · battle+ink 1.3 · engraving 3 (${cx.join(", ")})`);
+const cx = await page.evaluate(() => { const c = window.schetsklok.complexity; return [c(2, "Study for a figure", "black chalk"), c(2, "Portrait of a man", "oil on canvas"), c(1, "Battle of Anghiari", "pen and ink"), c(1.1, "Study of a hand", "chalk", true), c(3, "Plate 9", "")]; });
+check(cx.join() === "1.5,2.2,1.5,1.1,3", `complexity: master study in chalk 1.5 (the floor) · oil 2.2 · battle in ink 1.5 · lesson plate keeps 1.1 · engraving 3 (${cx.join(", ")})`);
 const only = t => all.filter(x => x.title.endsWith(" of " + t)).length;
 const keptFromSub1 = Object.keys(commonsMade).filter(t => /\/sub1$/.test(t)).map(only);
 check(keptFromSub1.every(n => n <= 1), `small subcategory (4 scans) yields at most 1 image: ${keptFromSub1.slice(0, 6).join(",")}…`);
@@ -214,8 +224,8 @@ check(sub2.some(n => n > 1), `larger subcategory (10) stays whole: ${sub2.slice(
 const imprIds = info.find(s => s.name === "Impressionism (AIC)").items.map(x => +x.id.slice(1));
 check(imprIds.every(id => aicMade.find(a => a.id === id && a.style_titles.includes("Impressionism"))), `style filter used when enough works match (${imprIds.length} Impressionism-tagged)`);
 check(info.find(s => s.name === "Post-Impressionism (AIC)").n > 12, "style filter falls back when nothing is tagged (post-impressionism still has images)");
-const folders = await page.evaluate(() => ["Schetsen", "Gravures", "Handen n1", "AI", "Pastel", "Etsen", "Anatomie", "Krijttekeningen", "Beeldhouwwerk", "Rijksmuseum", "Voorstudies"].map(window.schetsklok.catForFolder));
-check(folders.join() === "drawing,engraving,hands,ai,pastel,engraving,anatomy,drawing,sculpture,rijks,studies", `own folders land in the right category: ${folders.join(", ")}`);
+const folders = await page.evaluate(() => ["Schetsen", "Gravures", "Handen n1", "AI", "Pastel", "Etsen", "Anatomie", "Krijttekeningen", "Beeldhouwwerk", "Rijksmuseum", "Voorstudies", "Bargue", "Gipsen", "Tekenboek Bloemaert", "Loomis", "Expressionisme"].map(window.schetsklok.catForFolder));
+check(folders.join() === "drawing,engraving,hands,ai,pastel,engraving,anatomy,drawing,sculpture,rijks,studies,bargue,casts,drawingbooks,construction,expressionism", `own folders land in the right category: ${folders.join(", ")}`);
 
 console.log("\n2b · Each plan draws from its own complexity range");
 await page.click('[data-plan="short"]');
@@ -223,7 +233,7 @@ let pp = await page.evaluate(() => window.schetsklok.planPool().map(p => p.d));
 check(pp.length > 10 && pp.every(d => d <= 1.5), `Short: ${pp.length} images, all complexity ≤ 1.5`);
 check(/fit this session/.test(await page.$eval("#sum", e => e.textContent)), "start line says how many images fit");
 const scats = await page.evaluate(() => [...new Set(window.schetsklok.planPool().map(p => p.ck))].sort());
-check(scats.includes("bargue") && scats.includes("gesture") && !scats.includes("famous"), `Short draws from ${scats.join(", ")}`);
+check(scats.includes("bargue") && scats.includes("drawingbooks") && scats.includes("gesture") && !scats.includes("famous") && !scats.includes("engraving"), `Short draws from ${scats.join(", ")}`);
 await page.click('[data-plan="copy"]');
 pp = await page.evaluate(() => window.schetsklok.planPool().map(p => p.d));
 check(pp.length > 10 && pp.every(d => d >= 2.2), `Master copy: ${pp.length} images, all complexity ≥ 2.2`);
@@ -303,8 +313,8 @@ if (badInSession) check(S.swaps >= badInSession, `every broken image was replace
 else console.log("  info no broken image hit in this session; the stress run (BROKEN=0.6) covers swapping");
 check(breaks === 2, `2 breaks between blocks (${breaks})`);
 check(overlayWhileReady === 0, "loading screen never visible while a pose was running");
-const lv = S.slots.map(s => Math.round(s.d)).join("");
-check(/^1{6}[13]{3}3$/.test(lv), `2 min = drawing (~1), 10 min = engraving (3), 5 min either: ${lv}`);
+const lv = S.slots.map(s => s.ck[0]).join("");
+check(/^d{6}[de]{3}e$/.test(lv), `2 min = drawing, 10 min = engraving, 5 min either: ${lv}`);
 await page.click("#back");
 check(await page.waitForFunction(() => !document.fullscreenElement, null, { timeout: 3000 }).then(() => true, () => false), "stop leaves full screen");
 
@@ -337,10 +347,11 @@ check(total() === callsBefore, "second visit: no new API calls");
 check(await page.$eval('.plan[data-plan="class"] .s', e => e.textContent) === "8×2m · 4×5m · 2×10m · 1×20m", "Class card shows its breakdown");
 
 console.log("\n6 · Snapshot: a cleared device fills every set from sets.json, no API calls");
-await page.evaluate(() => window.schetsklok.loadAll()); await settled(catKeys);
+await page.evaluate(() => window.schetsklok.loadAll(true)); await page.waitForFunction(() => window.schetsklok.sets.every(s => ["ok", "error", "empty"].includes(s.status)), null, { timeout: 30000 });   // as the snapshot tool does
 snapBody = await page.evaluate(() => window.schetsklok.snapshot());
 const snapSets = Object.keys(snapBody.sets).length, snapTotal = await page.evaluate(() => window.schetsklok.sets.length);
-check(snapSets === snapTotal, `snapshot holds all ${snapSets} sets (${(JSON.stringify(snapBody).length / 1e6).toFixed(1)} MB)`);
+const snapMissing = await page.evaluate(names => window.schetsklok.sets.filter(s => !names.includes(s.set.name)).map(s => `${s.set.name}: ${s.status}`), Object.keys(snapBody.sets));
+check(snapSets === snapTotal, `snapshot holds all ${snapSets} of ${snapTotal} sets (${(JSON.stringify(snapBody).length / 1e6).toFixed(1)} MB)${snapMissing.length ? " — missing: " + snapMissing.join("; ") : ""}`);
 await page.evaluate(() => localStorage.clear());
 const before6 = total();
 await page.reload();
