@@ -36,7 +36,9 @@ review grid.
 
 ## Quick first visit: the snapshot
 `sets.json` is a weekly snapshot of every search set, made by `tools/snapshot.mjs`: it opens `index.html` headless
-and lets the page itself fetch every set from the real APIs, so there is one implementation of the sources. The
+and lets the page itself fetch every set from the real APIs, so there is one implementation of the sources (the Art
+Institute's API gives a browser no CORS answer, so the tool fetches that one through Node, identified as the API's
+docs ask, and hands the JSON to the page). The
 workflow `.github/workflows/snapshot.yml` runs it on Mondays and commits the file when it changed (or run it by hand:
 Actions → Snapshot sources → Run workflow). The page reads the snapshot first, so every category shows its count at
 once and ticking is immediate; a set missing from it is fetched live and kept on the device for three days. A set
