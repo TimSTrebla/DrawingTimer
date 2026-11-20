@@ -65,7 +65,14 @@ async function discover() {
 }
 
 // Smaller versions of the images the app would show, for the contact sheets.
-const thumb = u => String(u).replace(/\/(\d+)px-/, (m, w) => +w > 500 ? "/500px-" : m).replace(/\/full\/\d+,\//, "/full/400,/").replace(/([?&]width=)\d+/, "$1500");
+// Commons hands out the original when a file is narrower than the width asked for; a sheet of 24 originals gets
+// throttled, so a 500 px thumbnail address is built for those too.
+const thumb = u => {
+  u = String(u).replace(/\?utm_source=.*$/, "");
+  const m = u.match(/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/([0-9a-f])\/([0-9a-f]{2})\/([^/?]+)$/);
+  if (m) return `https://thumb.wikimedia.org/wikipedia/commons/thumb/${m[1]}/${m[2]}/${m[3]}/500px-${m[3]}`;
+  return u.replace(/\/(\d+)px-/, (x, w) => +w > 500 ? "/500px-" : x).replace(/\/full\/\d+,\//, "/full/400,/").replace(/([?&]width=)\d+/, "$1500");
+};
 const sample = (a, n) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); };
 
 async function sheets() {
@@ -82,6 +89,12 @@ async function sheets() {
     try { const res = await fetch(r.request().url(), { headers: { "User-Agent": UA, "AIC-User-Agent": UA, "Accept": "application/json" } });
       r.fulfill({ status: res.status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: await res.text() }); }
     catch (e) { r.fulfill({ status: 502, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "{}" }); }
+  });
+  // The Art Institute turns headless browsers away for images as well; fetch those outside the browser too.
+  await ctx.route("https://www.artic.edu/iiif/**", async r => {
+    try { const res = await fetch(r.request().url(), { headers: { "User-Agent": UA, "AIC-User-Agent": UA } });
+      r.fulfill({ status: res.status, contentType: res.headers.get("content-type") || "image/jpeg", body: Buffer.from(await res.arrayBuffer()) }); }
+    catch { r.fulfill({ status: 502, body: "" }); }
   });
   await page.goto("http://localhost:8123/");
   const defs = await page.evaluate(() => window.schetsklok.CONFIG.sets.map(s => ({ name: s.name, cat: s.cat, source: s.source, query: String(s.query), level: s.level })));
@@ -100,7 +113,15 @@ async function sheets() {
       await sheet.setContent(`<body style="margin:0;background:#16171a;color:#e9e6df;font:14px system-ui,sans-serif;width:1560px">
         <div style="padding:10px 12px 0"><b style="font-size:20px">${esc(job.name)}</b> · ${items.length} images · ${esc(job.source)} · ${job.candidate ? "candidate" : "in the app"}<br><span style="color:#9a978f;font-size:12px">${esc(String(job.query).slice(0, 180))}</span></div>
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px 12px">${pick.map(it => `<figure style="margin:0;min-width:0"><div style="height:250px;background:#000;display:grid;place-items:center"><img src="${esc(thumb(it.url))}" style="max-width:100%;max-height:250px"></div><figcaption style="font-size:11px;line-height:1.25;color:#9a978f;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${esc(it.title)}</figcaption></figure>`).join("")}</div></body>`, { waitUntil: "domcontentloaded" });
-      await sheet.waitForFunction(() => [...document.images].every(i => i.complete), null, { timeout: 60000 }).catch(() => {});
+      const settle = () => sheet.waitForFunction(() => [...document.images].every(i => i.complete), null, { timeout: 60000 }).catch(() => {});
+      await settle();
+      for (let round = 0; round < 3; round++) {   // throttled thumbnails: wait, then ask again for the ones that failed
+        const failed = await sheet.evaluate(() => [...document.images].filter(i => !(i.naturalWidth > 1)).length);
+        if (!failed) break;
+        await sleep(6000 * (round + 1));
+        await sheet.evaluate(() => { for (const i of document.images) if (!(i.naturalWidth > 1)) { const u = i.src; i.src = ""; i.src = u; } });
+        await settle();
+      }
       loaded = await sheet.evaluate(() => [...document.images].filter(i => i.naturalWidth > 1).length);
       await sheet.screenshot({ path: new URL(file, outDir).pathname, fullPage: true, type: "jpeg", quality: 72 });
       await sheet.close();
