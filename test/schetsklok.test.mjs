@@ -44,7 +44,7 @@ function commons(url) {
   if (depth === 0) {
     if (!cont) {
       // one category mixes its subject with other files, so `require` has something to keep and something to drop
-      pages = Array.from({ length: 40 }, (_, i) => file(t, i, /Vanderpoel/.test(t) ? { title: i % 2 ? `The Human Figure, plate ${i}` : `Portrait photograph ${i}` } : {}));
+      pages = Array.from({ length: 40 }, (_, i) => file(t, i, /Vanderpoel|sculptures in the Rijksmuseum/.test(t) ? { title: i % 2 ? `Academiestudie naar gips: The Human Figure, plate ${i}` : `Ontwerp voor een monument ${i}` } : {}));
       pages.push(file(t, "svg", { mime: "image/svg+xml", ext: ".svg" }), file(t, "bysa", { lic: "CC BY-SA 4.0" }), file(t, "tif", { mime: "image/tiff", ext: ".tif", tif: true }),
                  file(t, "ccby", { lic: "CC BY 4.0" }), file(t, "blank", { title: "Folio 003r blank" }));
       pages.push(...[1, 2, 3].map(k => ({ pageid: ++pid, ns: 14, title: `${t}/sub${k}` })));
@@ -207,8 +207,9 @@ const rijksItems = wd.find(s => s.cat === "rijks").items;
 check(rijksItems.every(x => x.source === "Rijksmuseum · via Wikimedia" && /Special:FilePath\/.*width=1920/.test(x.url) && /commons\.wikimedia\.org\/wiki\/File:/.test(x.link)), "Rijksmuseum items: source label, 1920-wide Commons image, link to the file page");
 check(all.filter(x => x.source === "Art Institute of Chicago").every(x => /\/full\/1686,\//.test(x.url)), "AIC images asked for at 1686 px");
 check(!info.some(s => /Vesalius|Écorchés \(AIC\)|Anatomical studies \(AIC\)/.test(s.name)), "book scans and the off-topic Art Institute anatomy searches are gone");
-const handsAic = info.find(s => s.name === "Hand studies (AIC)").items;
-check(handsAic.length > 0 && handsAic.every(x => /hands?|arms?/i.test(x.title)), `require keeps a museum search on its subject (${handsAic.length} hand studies, all titled so)`);
+const handsCma = info.find(s => s.name === "Hand studies (Cleveland)").items, castsRijks = info.find(s => s.name === "After casts (Rijksmuseum)").items;
+check(handsCma.length > 0 && handsCma.every(x => /hands?|arms?/i.test(x.title)), `require keeps a museum search on its subject (${handsCma.length} hand studies, all titled so)`);
+check(castsRijks.length > 0 && castsRijks.every(x => /gips/i.test(x.title)), `require picks the casts out of a mixed category (${castsRijks.length}, no monuments)`);
 const lessonD = all.filter(x => ["bargue", "drawingbooks", "construction", "firststeps", "casts", "expression", "proportion", "solids", "gesture"].includes(x.ck)).map(x => x.d);
 const masterD = all.filter(x => ["hands", "heads", "drawing", "nude", "studies", "drapery"].includes(x.ck)).map(x => x.d);
 check(lessonD.length > 100 && Math.max(...lessonD) <= 1.4 && Math.min(...masterD) >= 1.5, `lesson plates score ${Math.min(...lessonD)}–${Math.max(...lessonD)}, master drawings ${Math.min(...masterD)}–${Math.max(...masterD)}`);

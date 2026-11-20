@@ -9,9 +9,9 @@ zoom into it, and the zoom resets with the next image.
 
 | Group | Categories |
 |---|---|
-| Lessons | Bargue course (I after casts, II after the masters) · Drawing books (della Bella, Ars pictoria, Cipriani, academy examples, the American Drawing-Book; 1640–1850) · Construction (Loomis, Bridgman) · First steps · Casts · Expression (Le Brun) · Proportion (Dürer) · Solids (Jamnitzer) |
+| Lessons | Bargue course (I after casts, II after the masters) · Drawing books (della Bella, Ars pictoria, Cipriani, academy examples, the American Drawing-Book; 1640–1850) · Construction (Loomis, Bridgman, Vanderpoel) · First steps · Casts (academy studies, the Belvedere Torso) · Expression (Le Brun) · Proportion (Dürer) · Solids (Jamnitzer) |
 | Anatomy & motion | Anatomy (Albinus, Leonardo, Salvage's flayed gladiator) · Motion (Muybridge, people only) |
-| Master drawings | Hands & feet · Heads · Drapery · Figure studies · Life drawing · Studies & sketches |
+| Master drawings | Hands & feet · Heads · Drapery · Figure studies · Life drawing (académies from the Rijksmuseum and Cleveland) · Studies & sketches |
 | Sketch to finish | Oil sketches · Great scenes · Famous paintings · Rijksmuseum |
 | Media | Engraving & etching (Doré, Dürer, Rembrandt, Goya) · Japanese woodblock · Pastel · Oil: head & figure · Sculpture |
 | Modern | Colour & light · Impressionism · Expressionism (incl. Schiele) · Abstraction (Kandinsky, af Klint) |

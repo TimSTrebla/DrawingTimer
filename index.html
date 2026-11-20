@@ -256,9 +256,9 @@ const CONFIG = {
     // Lessons: plates made to be copied. lesson:true → complexity is the set's level as given (1–1.4), below every master drawing.
     bargue:       {group:"Lessons", lesson:true, name:"Bargue course", level:1.1, about:"The drawing course of the 1860s: casts in outline and in shade, then copies after the masters.", keywords:["bargue"]},
     drawingbooks: {group:"Lessons", lesson:true, name:"Drawing books", level:1.1, about:"Eyes, ears, mouths, heads, hands and feet, as drawing books have taught them since 1600.", keywords:["tekenboek","drawing book","cipriani","della bella"]},
-    construction: {group:"Lessons", lesson:true, name:"Construction", level:1.2, about:"Head, hands and body built from simple forms: Loomis and Bridgman.", keywords:["loomis","bridgman","construct"]},
+    construction: {group:"Lessons", lesson:true, name:"Construction", level:1.2, about:"Head, hands and body built from simple forms: Loomis, Bridgman, Vanderpoel.", keywords:["loomis","bridgman","vanderpoel","construct"]},
     firststeps:   {group:"Lessons", lesson:true, name:"First steps", level:1, about:"Simple objects, buildings and animals from beginners' books of the 1800s.", keywords:["first steps","beginner","eerste stappen"]},
-    casts:        {group:"Lessons", lesson:true, name:"Casts", level:1.2, about:"Academy studies after plaster casts: busts, torsos, hands and feet.", keywords:["cast","gips","plaster"]},
+    casts:        {group:"Lessons", lesson:true, name:"Casts", level:1.2, about:"Academy studies after plaster casts and the antique: busts, torsos, hands and feet.", keywords:["cast","gips","plaster"]},
     expression:   {group:"Lessons", lesson:true, name:"Expression", level:1.3, about:"Le Brun's heads of the passions: how a face shows feeling.", keywords:["passion","le brun","gelaatsuitdrukking"]},
     proportion:   {group:"Lessons", lesson:true, name:"Proportion", level:1.3, about:"Dürer's measured figures and heads.", keywords:["proporti"]},
     solids:       {group:"Lessons", lesson:true, name:"Solids", level:1.4, about:"Jamnitzer's geometric bodies: form, light and perspective without a subject.", keywords:["solid","perspecti","geometr"]},
@@ -300,9 +300,12 @@ const CONFIG = {
     {cat:"drawingbooks", name:"American Drawing-Book (1847)", source:"commons", query:"Category:The American drawing-book - a manual for the amateur, and basis of study for the professional artist - especially adapted (1847)", level:1},
     {cat:"construction", name:"Loomis · Head and Hands", source:"commons", query:"Category:Drawing the Head and Hands", level:1.1},
     {cat:"construction", name:"Bridgman · Constructive Anatomy", source:"commons", query:"Category:Constructive Anatomy (1920)", level:1.3},
+    {cat:"construction", name:"Vanderpoel · The Human Figure", source:"commons", query:"Category:John Vanderpoel", require:"Human Figure|Drawing|Torse", level:1.3},
     {cat:"firststeps", name:"Progressive Drawing-Book (1853)", source:"commons", query:"Category:The progressive drawing-book (1853)", level:1},
     {cat:"firststeps", name:"Fairland · easy studies (1838)", source:"commons", query:"Category:Fairland's juvenile artist, or, Easy studies for beginners in drawing, of figures, animals, shipping, and landscape (1838)", level:1.1},
     {cat:"casts",   name:"Tavenraat · academy studies",  source:"commons", query:"Category:Academic studies by Johannes Tavenraat", level:1.2},
+    {cat:"casts",   name:"After casts (Rijksmuseum)",    source:"commons", query:"Category:Drawings of sculptures in the Rijksmuseum Amsterdam", require:"gips|pleister|academiestudie", calls:10, level:1.2},   // the category also holds monuments and reliefs
+    {cat:"casts",   name:"The Belvedere Torso",          source:"commons", query:"Category:Drawings of Belvedere Torso", level:1.3},
     {cat:"expression", name:"Le Brun · passions",        source:"commons", query:"Category:Expressions des Passions de l'Ame (RMA)", level:1.3, exclude:"Titelprent|Uitdrukkingen van de passies"},
     {cat:"proportion", name:"Dürer · human proportion",  source:"commons", query:"Category:Vier bücher von menschlicher proportion", level:1.3},
     {cat:"solids",  name:"Jamnitzer · regular bodies",   source:"commons", query:"Category:Perspectiva Corporum Regularium (RMA)", level:1.4, exclude:"^Perspectiva corporum regularium|Titel"},
@@ -310,22 +313,24 @@ const CONFIG = {
     {cat:"anatomy", name:"Albinus · plates",             source:"commons", query:"Category:Tabulae sceleti et musculorum corporis humani", level:2, exclude:"folio|\\bpage|text|titel"},   // the plates, not the book scans
     {cat:"anatomy", name:"Leonardo · anatomical studies",source:"commons", query:"Category:Anatomical studies by Leonardo da Vinci", level:2, calls:40},   // 30 subcategories, one sheet each
     {cat:"anatomy", name:"Salvage · the flayed gladiator", source:"commons", query:"Category:Anatomie du gladiateur combattant", level:2},
-    {cat:"gesture", name:"Muybridge · people in motion", source:"commons", query:"Category:Motion studies by Eadweard Muybridge", level:1.3, calls:12,
-      exclude:"Ziege|Dread|Hansel|Pferd|L[öo]we|Kamel|K[äa]nguru|Taube|Guanako|Hund|Katze|Hirsch|Vogel|Adler|Kakadu|Schwein|Ochse|B[üu]ffel|Waschb|Affe|Pavian|Elefant|Maultier|Esel|\\bKuh|horse|\\bdog|\\bcat\\b|lion|\\bbird|goat|deer|\\belk|bison|\\bpig|mule|\\box\\b|elephant|raccoon|kangaroo|pigeon|cockatoo|eagle|vulture|ostrich|tiger|jaguar|sloth|buffalo|donkey|baboon|camel|\\bcow|General view|track"},
+    {cat:"gesture", name:"Muybridge · people in motion", source:"commons", query:"Category:Motion studies by Eadweard Muybridge", level:1.3, calls:14,
+      require:"^Plate|wom[ae]n|\\bm[ae]n\\b|athlete|dancing|jumping|wrestl|boxing|fencing|walking|running|ascending|descending|throwing|lifting|\\bnude",
+      exclude:"Zoopraxography|bouquet|LCCN|\\(Page|st[öo]rrisch|\\bSau\\b|Jennie|Elberon|gallop|trott|canter|\\bmare\\b|stallion|gelding|thoroughbred|saddle|rider|riding|jockey|hound|parrot|stork|swan|\\bhog|\\bsow\\b|\\bbull\\b|capybara|\\bgnu|antelope|\\bbear\\b|monkey|Ziege|Dread|Hansel|Pferd|L[öo]we|Kamel|K[äa]nguru|Taube|Guanako|Hund|Katze|Hirsch|Vogel|Adler|Kakadu|Schwein|Ochse|B[üu]ffel|Waschb|Affe|Pavian|Elefant|Maultier|Esel|\\bKuh|horse|\\bdog|\\bcat\\b|lion|\\bbird|goat|deer|\\belk|bison|\\bpig|mule|\\box\\b|elephant|raccoon|kangaroo|pigeon|cockatoo|eagle|vulture|ostrich|tiger|jaguar|sloth|buffalo|donkey|baboon|camel|\\bcow|General view|track"},
     // Master drawings. Free-text museum searches are noisy; `require` keeps what the title confirms.
+    {cat:"hands",   name:"Hands (Rijksmuseum)",          source:"commons", query:"Category:Drawings of hands in the Rijksmuseum Amsterdam", exclude:"Vignet|Maandblad|nagels", level:1.6},
+    {cat:"hands",   name:"Hands · Italian drawings (Cooper Hewitt)", source:"commons", query:"Category:Drawings from Italy in the Cooper–Hewitt, Smithsonian Design Museum - Hands", level:1.6},
     {cat:"hands",   name:"Feet (Rijksmuseum)",           source:"commons", query:"Category:Drawings of feet in the Rijksmuseum Amsterdam", level:1.6},
-    {cat:"hands",   name:"Drawings of hands",            source:"commons", query:"Category:Drawings of hands", level:1.6, calls:12, exclude:"Puck|Alice|Jab[oó]n|Magic|Bandage|Fingeruhr|measure|MUNDO|Almanaque|\\bpalm|chirom|Kabbala|Tischsitte"},
-    {cat:"hands",   name:"Hand studies (AIC)",           source:"aic",     query:"study of hands", type:"drawing", require:"\\bhands?\\b|\\barms?\\b|fingers?", level:1.6},
-    {cat:"hands",   name:"Hand studies (Cleveland)",     source:"cma",     query:"hands", type:"Drawing", require:"\\bhands?\\b|\\barms?\\b|fingers?", exclude:"mirror", level:1.6},
-    {cat:"heads",   name:"Head studies (AIC)",           source:"aic",     query:"head study", type:"drawing", medium:"chalk|charcoal|crayon|graphite|pencil", require:"\\bheads?\\b|\\bface|profile", exclude:NO_SCENERY, level:1.6},
-    {cat:"heads",   name:"Heads (Cleveland)",            source:"cma",     query:"head of", type:"Drawing", require:"\\bheads?\\b|\\bface|profile", exclude:NO_SCENERY, level:1.6},
+    {cat:"hands",   name:"Hand studies (Cleveland)",     source:"cma",     query:"hands", type:"Drawing", require:"^(a )?(study|studies|sketch|sketches)\\b.*\\bhands?\\b|^(right |left )?(hands?|arms?)\\b", exclude:"mirror|pockets", level:1.6},
+    {cat:"heads",   name:"Heads · Italian drawings (Cooper Hewitt)", source:"commons", query:"Category:Drawings from Italy in the Cooper–Hewitt, Smithsonian Design Museum - Human head", level:1.6},
+    {cat:"heads",   name:"Head studies (AIC)",           source:"aic",     query:"head study", type:"drawing", medium:"chalk|charcoal|crayon|graphite|pencil", require:"\\bheads?\\b|\\bface|profile", exclude:NO_SCENERY + "|pageant|judgment|warriors|horsemen", level:1.6},
+    {cat:"heads",   name:"Heads (Cleveland)",            source:"cma",     query:"head of", type:"Drawing", require:"^(the |a |five |two |three |four )?(grotesque )?heads? |^(study|studies|sketch|sketches) (of|for) .*\\bheads?\\b|^profile", exclude:NO_SCENERY + "|Salome|Herod|Tomyris|Holofernes|Goliath|Baptist|hands", level:1.6},
     {cat:"drapery", name:"Leonardo · drapery",           source:"commons", query:"Category:Drawings of drapery by Leonardo da Vinci", level:2},
     {cat:"drapery", name:"Drapery studies (AIC)",        source:"aic",     query:"drapery study", type:"drawing", require:"draper|\\brobe|cloak|mantle|garment|\\bfolds?\\b", level:2},
     {cat:"drapery", name:"Drapery studies (Cleveland)",  source:"cma",     query:"drapery", type:"Drawing", require:"draper|\\brobe|cloak|mantle|garment|\\bfolds?\\b", level:2},
     {cat:"drawing", name:"Chalk figure studies",         source:"aic",     query:"chalk figure study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1.6},
     {cat:"drawing", name:"Red chalk (sanguine)",         source:"aic",     query:"red chalk study", type:"drawing", medium:"chalk|charcoal|crayon|sanguine", exclude:NO_SCENERY, level:1.6},
     {cat:"drawing", name:"Figure studies (Cleveland)",   source:"cma",     query:"figure study", type:"Drawing", require:"nude|figure|torso|\\bmale|female|\\bm[ae]n\\b|wom[ae]n|youth|\\bboy|\\bgirl|seated|standing|reclining|kneeling", exclude:NO_SCENERY, level:1.6},
-    {cat:"drawing", name:"Vanderpoel · the human figure", source:"commons", query:"Category:John Vanderpoel", require:"Human Figure|Drawing|Torse", level:1.6},
+    {cat:"nude",    name:"Académies (Rijksmuseum)",      source:"commons", query:"Category:Nude drawings in the Rijksmuseum Amsterdam", require:"naakt|nude|academ", calls:16, level:1.6},
     {cat:"nude",    name:"Nude studies (AIC)",           source:"aic",     query:"nude study", type:"drawing", require:"nude|bather|academ|torso", exclude:NO_SCENERY, level:1.6},
     {cat:"nude",    name:"Nude studies (Cleveland)",     source:"cma",     query:"nude", type:"Drawing", require:"nude|bather|academ|torso", exclude:NO_SCENERY, level:1.6},
     {cat:"studies", name:"Studies (Commons)",            source:"commons", query:"Category:Studies (drawings)", level:1.6, calls:12},
@@ -993,7 +998,7 @@ if (prefs.brk != null) $("optBreak").checked = prefs.brk;
 if (prefs.sound != null) $("optSound").checked = prefs.sound;
 
 // For tests, the snapshot tool and the curious.
-const VERSION = "2026-11-21"; $("version").textContent = VERSION;
+const VERSION = "2026-11-22"; $("version").textContent = VERSION;
 window.schetsklok = {VERSION, CONFIG, sets, pool, planPool, loadAll, snapshot, keyOf: cacheKey, session: () => S,
   probe: async set => (await LOADERS[set.source](set)).map(o => ({...o, d: complexity(set.level || 1.6, o.title, o.medium || "", !!(CATS.get(set.cat) || {}).lesson)})),   // one set, fetched live, nothing stored (tools/review.mjs)
   catForFolder: f => catForFolder(f).key, complexity, zoom: () => ({...Z})};
